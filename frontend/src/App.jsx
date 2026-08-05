@@ -1,14 +1,16 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
-import Home from "./Pages/Home/Home"
-import Navbar from "./components/layout/Navbar"
+import Landing from "./Pages/Home/Landing"
+import IncioS from "./Pages/Home/InicioS"
+import Registro from "./Pages/Home/Registro"
 
 function AppContent () {
     return(
         <div>
-            <Navbar />
             <main>
                 <Routes>
-                    <Route path="/" element={<Home/>}/>
+                    <Route path="/" element={<Landing/>}/>
+                    <Route path="/inicioS" element={<IncioS/>}/>
+                    <Route path="/registro" element={<Registro/>}/>
                 </Routes>
             </main>
         </div>
