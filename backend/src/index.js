@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import chatRoutes from './routes/chat.routes.js';
 import authRoutes from "./routes/auth.routes.js";
 
 dotenv.config();
@@ -24,7 +23,7 @@ app.get('/', (req, res) => {
 });
 
 // Importar nuestras rutas
-app.use('/api/chat', chatRoutes);
+
 
 // Iniciar el servidor
 app.listen(PORT, () => {
@@ -32,4 +31,3 @@ app.listen(PORT, () => {
 });
 
 app.use("/api/auth", authRoutes);
-app.use("/api/chat", chatRoutes);
