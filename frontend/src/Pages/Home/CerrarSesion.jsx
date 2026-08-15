@@ -1,348 +1,336 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+
 import {
-    LayoutDashboard,
-    MessageSquare,
-    History,
-    User,
-    LogOut,
-    Menu,
-    X,
-    AlertTriangle,
-    Smile,
-    Dumbbell,
+  LayoutDashboard,
+  MessageSquare,
+  History,
+  User,
+  LogOut,
+  Menu,
+  X,
+  Smile,
+  Dumbbell,
 } from "lucide-react";
 
+import { supabase } from "../../config/supabase";
+
 function CerrarSesion() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
-    const [showModal, setShowModal] = useState(true);
-    const [menuOpen, setMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen] =
+    useState(false);
 
-    // Cancelar cierre de sesión
-    const handleCancel = () => {
-        setShowModal(false);
-    };
+  const [loading, setLoading] =
+    useState(false);
 
-    // Cerrar sesión
-    const handleLogout = () => {
-        // Aquí posteriormente podemos agregar:
-        // localStorage.removeItem("token");
+  const [errorMessage, setErrorMessage] =
+    useState("");
 
-        navigate("/inicioS");
-    };
+  const handleCancel = () => {
+    navigate("/chatbot");
+  };
 
-    return (
-        <div className="min-h-screen bg-[#FAF7F2] text-[#1B1C1A]">
+  const handleLogout = async () => {
+    setLoading(true);
+    setErrorMessage("");
 
-            {/* =====================================================
-          BOTÓN MENÚ MÓVIL
-      ====================================================== */}
-            <button
-                type="button"
-                onClick={() => setMenuOpen(!menuOpen)}
-                className="fixed left-4 top-4 z-[60] rounded-lg bg-[#0C4A6E] p-2 text-white shadow-md md:hidden"
-                aria-label="Abrir menú"
-            >
-                {menuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+    try {
+      const { error } =
+        await supabase.auth.signOut();
 
-            {/* =====================================================
-          SIDEBAR
-      ====================================================== */}
-            <aside
-                className={`
-          fixed left-0 top-0 z-50 flex h-screen w-64 flex-col
-          bg-[#0C4A6E] text-white shadow-xl
+      if (error) {
+        throw error;
+      }
+
+      navigate("/inicioS", {
+        replace: true,
+      });
+
+    } catch (error) {
+      console.error(
+        "Error cerrando sesión:",
+        error
+      );
+
+      setErrorMessage(
+        error.message ||
+          "No fue posible cerrar la sesión."
+      );
+
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#FAF7F2] text-[#1B1C1A]">
+
+      {/* MENÚ MÓVIL */}
+
+      <button
+        type="button"
+        onClick={() =>
+          setMenuOpen((value) => !value)
+        }
+        className="fixed left-4 top-4 z-[60] rounded-lg bg-[#0C4A6E] p-2 text-white shadow-md md:hidden"
+        aria-label="Abrir menú"
+      >
+        {menuOpen ? (
+          <X size={24} />
+        ) : (
+          <Menu size={24} />
+        )}
+      </button>
+
+      {/* SIDEBAR */}
+
+      <aside
+        className={`
+          fixed left-0 top-0 z-50 flex h-screen w-64
+          flex-col bg-[#0C4A6E] text-white shadow-xl
           transition-transform duration-300
           md:translate-x-0
-          ${menuOpen ? "translate-x-0" : "-translate-x-full"}
+          ${
+            menuOpen
+              ? "translate-x-0"
+              : "-translate-x-full"
+          }
         `}
-            >
+      >
 
-                {/* LOGO */}
-                <div className="flex h-20 items-center border-b border-white/10 px-5">
+        <div className="flex h-20 items-center border-b border-white/10 px-5">
 
-                    <Link
-                        to="/"
-                        onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-3"
-                    >
+          <Link
+            to="/"
+            className="flex items-center gap-3"
+          >
 
-                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white font-bold text-[#0C4A6E]">
-                            D
-                        </div>
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white font-bold text-[#0C4A6E]">
+              D
+            </div>
 
-                        <span className="text-lg font-bold tracking-tight">
-                            DIAGNOHEALTH
-                        </span>
+            <span className="text-lg font-bold">
+              DIAGNOHEALTH
+            </span>
 
-                    </Link>
-
-                </div>
-
-                {/* ===================================================
-            MENÚ
-        ==================================================== */}
-                <nav className="flex-1 space-y-2 px-3 py-7">
-
-                    {/* DASHBOARD */}
-                    <Link
-                        to="/"
-                        onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-4 rounded-lg px-4 py-3 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white"
-                    >
-                        <LayoutDashboard size={20} />
-                        <span>Dashboard</span>
-                    </Link>
-
-                    {/* CHAT CON IA */}
-                    <Link
-                        to="/chatbot"
-                        onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-4 rounded-lg px-4 py-3 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white"
-                    >
-                        <MessageSquare size={20} />
-                        <span>Chat con IA</span>
-                    </Link>
-
-                    {/* MIS CAMINOS */}
-                    <button
-                        type="button"
-                        className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white"
-                    >
-                        <History size={20} />
-                        <span>Mis Caminos</span>
-                    </button>
-
-                    {/* PERFIL */}
-                    <Link
-                        to="/inicioS"
-                        onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-4 rounded-lg px-4 py-3 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white"
-                    >
-                        <User size={20} />
-                        <span>Perfil</span>
-                    </Link>
-
-                </nav>
-
-                {/* ===================================================
-            NIVEL DE BIENESTAR
-        ==================================================== */}
-                <div className="px-4 pb-6">
-
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-
-                        <p className="mb-3 text-sm font-medium text-white">
-                            Nivel de Bienestar
-                        </p>
-
-                        <div className="h-2 overflow-hidden rounded-full bg-white/10">
-
-                            <div
-                                className="h-full rounded-full bg-[#7BC2FF]"
-                                style={{ width: "65%" }}
-                            />
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </aside>
-
-            {/* =====================================================
-          FONDO OSCURO PARA MÓVIL
-      ====================================================== */}
-            {menuOpen && (
-                <button
-                    type="button"
-                    onClick={() => setMenuOpen(false)}
-                    className="fixed inset-0 z-40 bg-black/40 md:hidden"
-                    aria-label="Cerrar menú"
-                />
-            )}
-
-            {/* =====================================================
-          CONTENIDO PRINCIPAL
-      ====================================================== */}
-            <main className="ml-0 min-h-screen md:ml-64">
-
-                {/* ===================================================
-            ENCABEZADO
-        ==================================================== */}
-                <header className="border-b border-gray-200 bg-white px-4 py-5 sm:px-6">
-
-                    <div className="pl-12 md:pl-0">
-
-                        <h1 className="text-2xl font-bold text-[#00334F]">
-                            Hola, Usuario
-                        </h1>
-
-                        <p className="mt-1 text-gray-500">
-                            Bienvenido de nuevo a DIAGNOHEALTH.
-                        </p>
-
-                    </div>
-
-                </header>
-
-                {/* ===================================================
-            CONTENIDO DE FONDO
-        ==================================================== */}
-                <section className="px-4 py-8 sm:px-6">
-
-                    <div className="mx-auto max-w-6xl">
-
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-
-                            {/* TU ÁNIMO */}
-                            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-
-                                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-[#CDE5FF]">
-
-                                    <Smile
-                                        size={24}
-                                        className="text-[#006399]"
-                                    />
-
-                                </div>
-
-                                <h3 className="mb-2 text-lg font-semibold text-[#00334F]">
-                                    Tu Ánimo
-                                </h3>
-
-                                <p className="text-sm leading-6 text-gray-500">
-                                    Has registrado una mejora del 15% esta semana.
-                                </p>
-
-                            </div>
-
-                            {/* EJERCICIOS */}
-                            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-
-                                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-[#CDE5FF]">
-
-                                    <Dumbbell
-                                        size={24}
-                                        className="text-[#006399]"
-                                    />
-
-                                </div>
-
-                                <h3 className="mb-2 text-lg font-semibold text-[#00334F]">
-                                    Ejercicios
-                                </h3>
-
-                                <p className="text-sm leading-6 text-gray-500">
-                                    3 sesiones completadas hoy. ¡Excelente trabajo!
-                                </p>
-
-                            </div>
-
-                            {/* HISTORIAL */}
-                            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-
-                                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-[#CDE5FF]">
-
-                                    <History
-                                        size={24}
-                                        className="text-[#006399]"
-                                    />
-
-                                </div>
-
-                                <h3 className="mb-2 text-lg font-semibold text-[#00334F]">
-                                    Historial
-                                </h3>
-
-                                <p className="text-sm leading-6 text-gray-500">
-                                    Tu última nota fue hace 2 horas.
-                                </p>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </section>
-
-            </main>
-
-            {/* =====================================================
-          MODAL CERRAR SESIÓN
-      ====================================================== */}
-            {showModal && (
-
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[rgba(12,18,22,0.6)] px-4 backdrop-blur-[4px]">
-
-                    {/* TARJETA */}
-                    <div className="w-full max-w-[440px] rounded-xl border border-gray-300 bg-white p-8 text-center shadow-2xl">
-
-                        {/* =================================================
-                ICONO
-            ================================================== */}
-                        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#E0F2FE]">
-
-                            <LogOut
-                                size={32}
-                                strokeWidth={2}
-                                className="text-[#006399]"
-                            />
-
-                        </div>
-
-                        {/* =================================================
-                TEXTO
-            ================================================== */}
-                        <div className="mb-8">
-
-                            <h2 className="mb-2 text-2xl font-semibold text-[#1B1C1A]">
-                                ¿Cerrar sesión?
-                            </h2>
-
-                            <p className="px-2 text-base leading-6 text-gray-500">
-                                Tu progreso está guardado, puedes volver cuando quieras
-                            </p>
-
-                        </div>
-
-                        {/* =================================================
-                BOTONES
-            ================================================== */}
-                        <div className="flex w-full flex-col gap-3 sm:flex-row">
-
-                            {/* CANCELAR */}
-                            <button
-                                type="button"
-                                onClick={handleCancel}
-                                className="order-2 flex-1 rounded-lg border border-gray-300 bg-white py-3 text-sm font-semibold text-[#00334F] transition hover:bg-gray-100 active:scale-95 sm:order-1"
-                            >
-                                Cancelar
-                            </button>
-
-                            {/* CERRAR SESIÓN */}
-                            <button
-                                type="button"
-                                onClick={handleLogout}
-                                className="order-1 flex-1 rounded-lg bg-[#991B1B] py-3 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 active:scale-95 sm:order-2"
-                            >
-                                Cerrar sesión
-                            </button>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            )}
+          </Link>
 
         </div>
-    );
+
+        <nav className="flex-1 space-y-2 px-3 py-7">
+
+          <Link
+            to="/"
+            className="flex items-center gap-4 rounded-lg px-4 py-3 text-sm text-white/80 hover:bg-white/10"
+          >
+            <LayoutDashboard size={20} />
+            Dashboard
+          </Link>
+
+          <Link
+            to="/chatbot"
+            className="flex items-center gap-4 rounded-lg px-4 py-3 text-sm text-white/80 hover:bg-white/10"
+          >
+            <MessageSquare size={20} />
+            Chat con IA
+          </Link>
+
+          <button
+            type="button"
+            className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left text-sm text-white/80 hover:bg-white/10"
+          >
+            <History size={20} />
+            Mis Caminos
+          </button>
+
+          <Link
+            to="/inicioS"
+            className="flex items-center gap-4 rounded-lg px-4 py-3 text-sm text-white/80 hover:bg-white/10"
+          >
+            <User size={20} />
+            Perfil
+          </Link>
+
+        </nav>
+
+        <div className="px-4 pb-6">
+
+          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+
+            <p className="mb-3 text-sm font-medium">
+              Nivel de Bienestar
+            </p>
+
+            <div className="h-2 overflow-hidden rounded-full bg-white/10">
+
+              <div
+                className="h-full rounded-full bg-[#7BC2FF]"
+                style={{
+                  width: "65%",
+                }}
+              />
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </aside>
+
+      {/* OVERLAY */}
+
+      {menuOpen && (
+        <button
+          type="button"
+          onClick={() => setMenuOpen(false)}
+          className="fixed inset-0 z-40 bg-black/40 md:hidden"
+          aria-label="Cerrar menú"
+        />
+      )}
+
+      {/* CONTENIDO */}
+
+      <main className="ml-0 min-h-screen md:ml-64">
+
+        <header className="border-b border-gray-200 bg-white px-4 py-5 sm:px-6">
+
+          <div className="pl-12 md:pl-0">
+
+            <h1 className="text-2xl font-bold text-[#00334F]">
+              Cerrar sesión
+            </h1>
+
+            <p className="mt-1 text-gray-500">
+              Administra tu sesión de DiagnoHealth.
+            </p>
+
+          </div>
+
+        </header>
+
+        <section className="px-4 py-10 sm:px-6">
+
+          <div className="mx-auto max-w-2xl">
+
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+
+              <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-600">
+
+                <LogOut size={30} />
+
+              </div>
+
+              <h2 className="text-center text-2xl font-bold text-[#00334F]">
+                ¿Quieres cerrar sesión?
+              </h2>
+
+              <p className="mx-auto mt-3 max-w-md text-center text-gray-500">
+                Tu sesión actual se cerrará de forma segura.
+              </p>
+
+              {errorMessage && (
+                <div
+                  role="alert"
+                  className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                >
+                  {errorMessage}
+                </div>
+              )}
+
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  disabled={loading}
+                  className="rounded-lg border border-gray-300 px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  disabled={loading}
+                  className="flex items-center justify-center gap-2 rounded-lg bg-red-600 px-6 py-3 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+
+                  <LogOut size={18} />
+
+                  {loading
+                    ? "Cerrando sesión..."
+                    : "Cerrar sesión"}
+
+                </button>
+
+              </div>
+
+            </div>
+
+            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+
+              <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+
+                <Smile
+                  size={24}
+                  className="mb-3 text-[#0369A1]"
+                />
+
+                <h3 className="font-semibold text-[#00334F]">
+                  Tu ánimo
+                </h3>
+
+                <p className="mt-1 text-sm text-gray-500">
+                  Continúa cuidando tu bienestar.
+                </p>
+
+              </div>
+
+              <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+
+                <Dumbbell
+                  size={24}
+                  className="mb-3 text-[#0369A1]"
+                />
+
+                <h3 className="font-semibold text-[#00334F]">
+                  Ejercicios
+                </h3>
+
+                <p className="mt-1 text-sm text-gray-500">
+                  Mantén tus hábitos saludables.
+                </p>
+
+              </div>
+
+              <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+
+                <History
+                  size={24}
+                  className="mb-3 text-[#0369A1]"
+                />
+
+                <h3 className="font-semibold text-[#00334F]">
+                  Historial
+                </h3>
+
+                <p className="mt-1 text-sm text-gray-500">
+                  Tus actividades quedan asociadas a tu cuenta.
+                </p>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </section>
+
+      </main>
+
+    </div>
+  );
 }
 
 export default CerrarSesion;

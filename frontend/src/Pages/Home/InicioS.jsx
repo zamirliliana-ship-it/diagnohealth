@@ -1,165 +1,414 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { useEffect, useState } from "react";
 
-function IncioS() {
+import {
+  Link,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+
+import {
+  Eye,
+  EyeOff,
+  LoaderCircle,
+  LogIn,
+} from "lucide-react";
+
+import { supabase } from "../../config/supabase";
+
+function InicioS() {
   const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const location = useLocation();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const [correo, setCorreo] = useState("");
+  const [password, setPassword] = useState("");
+
+  const [showPassword, setShowPassword] =
+    useState(false);
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [errorMessage, setErrorMessage] =
+    useState("");
+
+  const [successMessage, setSuccessMessage] =
+    useState("");
+
+  // =========================================================
+  // SI YA ESTÁ AUTENTICADO
+  // =========================================================
+
+  useEffect(() => {
+    let mounted = true;
+
+    const checkSession = async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (!mounted) return;
+
+        if (session) {
+          navigate("/chatbot", {
+            replace: true,
+          });
+        }
+      } catch (error) {
+        console.error(
+          "Error verificando sesión:",
+          error
+        );
+      }
+    };
+
+    checkSession();
+
+    return () => {
+      mounted = false;
+    };
+  }, [navigate]);
+
+  // =========================================================
+  // INICIAR SESIÓN
+  // =========================================================
+
+  const handleLogin = async (event) => {
+    event.preventDefault();
+
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    const email = correo.trim();
+
+    if (!email || !password) {
+      setErrorMessage(
+        "Ingresa tu correo y contraseña."
+      );
+
+      return;
+    }
+
     setLoading(true);
 
-    setTimeout(() => {
+    try {
+      const {
+        data,
+        error,
+      } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data?.session) {
+        throw new Error(
+          "No se pudo iniciar la sesión."
+        );
+      }
+
+      setSuccessMessage(
+        "Sesión iniciada correctamente."
+      );
+
+      // Si venía de una ruta protegida,
+      // regresamos allí.
+      const destination =
+        location.state?.from ||
+        "/chatbot";
+
+      navigate(destination, {
+        replace: true,
+        state: {},
+      });
+
+    } catch (error) {
+      console.error(
+        "Error iniciando sesión:",
+        error
+      );
+
+      setErrorMessage(
+        error.message ||
+          "No fue posible iniciar sesión."
+      );
+    } finally {
       setLoading(false);
-      navigate('/perfil');
-    }, 1500);
+    }
+  };
+
+  // =========================================================
+  // RECUPERAR CONTRASEÑA
+  // =========================================================
+
+  const handleForgotPassword = () => {
+    const email = correo.trim();
+
+    navigate("/recuperar-password", {
+      state: {
+        email,
+      },
+    });
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center p-4 md:p-8 overflow-x-hidden">
-      {/* Fondo atmosférico sutil */}
-      <div className="fixed inset-0 pointer-events-none opacity-20 overflow-hidden">
-        <div className="absolute -top-[10%] -left-[5%] w-[40%] h-[40%] rounded-full blur-[120px] bg-sky-300/30"></div>
-        <div className="absolute -bottom-[10%] -right-[5%] w-[40%] h-[40%] rounded-full blur-[120px] bg-[#0C4A6E]/10"></div>
-      </div>
+    <div className="min-h-screen bg-[#FAF7F2]">
 
-      {/* Contenedor del login */}
-      <main className="relative z-10 w-full max-w-[440px]">
-        <div className="bg-white border border-gray-200 rounded-xl p-6 md:p-10 shadow-[0px_4px_20px_rgba(12,74,110,0.04)]">
-          {/* Marca */}
-          <div className="flex flex-col items-center mb-8">
-            <span className="text-2xl font-bold text-[#0369A1] mb-1">
+      {/* =====================================================
+          HEADER
+      ====================================================== */}
+
+      <header className="border-b border-gray-200 bg-white">
+
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-5 sm:px-6 lg:px-8">
+
+          <Link
+            to="/"
+            className="flex items-center gap-3"
+          >
+
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0C4A6E] font-bold text-white">
+              D
+            </div>
+
+            <span className="text-lg font-bold text-[#0C4A6E]">
               DIAGNOHEALTH
             </span>
-            <h1 className="text-xl font-bold text-gray-800 text-center">
-              Bienvenido de vuelta
-            </h1>
-            <p className="text-gray-500 text-sm mt-1 text-center opacity-70">
-              Tu espacio seguro de bienestar mental.
-            </p>
-          </div>
 
-          {/* Formulario */}
-          <form className="space-y-5" onSubmit={handleSubmit}>
-            <div className="space-y-1">
-              <label className="text-sm text-gray-600 block" htmlFor="email">
-                Correo electrónico
-              </label>
-              <div className="relative group">
-                <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#0369A1] transition-colors" />
-                <input
-                  className="w-full pl-11 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-200 focus:border-[#0369A1] outline-none transition-all placeholder:text-gray-300"
-                  id="email"
-                  name="email"
-                  placeholder="ejemplo@diagnohealth.com"
-                  required
-                  type="email"
-                />
-              </div>
-            </div>
+          </Link>
 
-            <div className="space-y-1">
-              <label className="text-sm text-gray-600 block" htmlFor="password">
-                Contraseña
-              </label>
-              <div className="relative group">
-                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#0369A1] transition-colors" />
-                <input
-                  className="w-full pl-11 pr-11 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-200 focus:border-[#0369A1] outline-none transition-all placeholder:text-gray-300"
-                  id="password"
-                  name="password"
-                  placeholder="••••••••"
-                  required
-                  type={showPassword ? 'text' : 'password'}
-                />
-                <button
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#0369A1] transition-colors"
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
-            </div>
+          <Link
+            to="/registro"
+            className="text-sm font-semibold text-[#0369A1] hover:text-[#0C4A6E]"
+          >
+            Crear cuenta
+          </Link>
 
-            <div className="flex items-center justify-between py-1">
-              <label className="flex items-center space-x-2 cursor-pointer group">
-                <input
-                  className="peer h-5 w-5 rounded border-gray-300 text-[#0369A1] focus:ring-sky-200 transition-all cursor-pointer"
-                  type="checkbox"
-                />
-                <span className="text-sm text-gray-600 group-hover:text-gray-800 transition-colors">
-                  Recordarme
-                </span>
-              </label>
-              {/* eslint-disable-next-line jsx-a11y/anchor-is-valid -- TODO: enlazar cuando exista la pantalla de recuperar contraseña */}
-              <a className="text-sm text-[#0369A1] hover:text-[#0C4A6E] transition-colors" href="#">
-                ¿Olvidaste tu contraseña?
-              </a>
-            </div>
-
-            <button
-              className="w-full bg-[#0369A1] hover:bg-[#0C4A6E] text-white text-sm font-medium py-2.5 rounded-lg shadow-sm active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2"
-              type="submit"
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <span>Cargando...</span>
-                </>
-              ) : (
-                <>
-                  Iniciar sesión
-                  <ArrowRight size={18} />
-                </>
-              )}
-            </button>
-
-            <div className="relative flex items-center py-4">
-              <div className="flex-grow border-t border-gray-200"></div>
-              <span className="flex-shrink mx-4 text-xs text-gray-400 uppercase tracking-wider">
-                O continuar con
-              </span>
-              <div className="flex-grow border-t border-gray-200"></div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <button className="flex items-center justify-center py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm text-gray-600" type="button">
-                Google
-              </button>
-              <button className="flex items-center justify-center py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm text-gray-600" type="button">
-                Otras apps
-              </button>
-            </div>
-          </form>
-
-          <div className="mt-8 pt-6 border-t border-gray-200 text-center">
-            <p className="text-sm text-gray-600">
-              ¿No tienes cuenta?{' '}
-              <Link className="text-[#0369A1] font-bold hover:underline transition-all" to="/registro">Regístrate</Link>
-            </p>
-          </div>
         </div>
 
-        <footer className="mt-8 flex flex-wrap justify-center gap-4 text-gray-400 text-xs">
-          {/* eslint-disable-next-line jsx-a11y/anchor-is-valid -- TODO: enlazar cuando exista la pantalla de Ayuda */}
-          <a className="hover:text-[#0369A1] transition-colors" href="#">Ayuda</a>
-          {/* eslint-disable-next-line jsx-a11y/anchor-is-valid -- TODO: enlazar cuando exista la pantalla de Privacidad */}
-          <a className="hover:text-[#0369A1] transition-colors" href="#">Privacidad</a>
-          {/* eslint-disable-next-line jsx-a11y/anchor-is-valid -- TODO: enlazar cuando exista la pantalla de Términos */}
-          <a className="hover:text-[#0369A1] transition-colors" href="#">Términos</a>
-          <span className="hidden md:inline">|</span>
-          <span>© 2024 DIAGNOHEALTH. Todos los derechos reservados.</span>
-        </footer>
+      </header>
+
+      {/* =====================================================
+          LOGIN
+      ====================================================== */}
+
+      <main className="flex min-h-[calc(100vh-81px)] items-center justify-center px-4 py-10">
+
+        <div className="w-full max-w-md">
+
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+
+            {/* ICONO / TÍTULO */}
+
+            <div className="mb-8 text-center">
+
+              <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#E0F2FE] text-[#0369A1]">
+                <LogIn size={26} />
+              </div>
+
+              <h1 className="text-2xl font-bold text-[#00334F]">
+                Bienvenido de nuevo
+              </h1>
+
+              <p className="mt-2 text-sm text-gray-500">
+                Inicia sesión para continuar en DiagnoHealth.
+              </p>
+
+            </div>
+
+            {/* MENSAJE DE ERROR */}
+
+            {errorMessage && (
+              <div
+                role="alert"
+                className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+              >
+                {errorMessage}
+              </div>
+            )}
+
+            {/* MENSAJE DE ÉXITO */}
+
+            {successMessage && (
+              <div
+                role="status"
+                className="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700"
+              >
+                {successMessage}
+              </div>
+            )}
+
+            {/* FORMULARIO */}
+
+            <form
+              onSubmit={handleLogin}
+              className="space-y-5"
+            >
+
+              {/* CORREO */}
+
+              <div>
+
+                <label
+                  htmlFor="correo"
+                  className="mb-2 block text-sm font-medium text-[#00334F]"
+                >
+                  Correo electrónico
+                </label>
+
+                <input
+                  id="correo"
+                  type="email"
+                  value={correo}
+                  onChange={(event) =>
+                    setCorreo(event.target.value)
+                  }
+                  placeholder="tu@correo.com"
+                  autoComplete="email"
+                  disabled={loading}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#0369A1] focus:ring-2 focus:ring-[#0369A1]/10 disabled:bg-gray-100"
+                />
+
+              </div>
+
+              {/* CONTRASEÑA */}
+
+              <div>
+
+                <div className="mb-2 flex items-center justify-between">
+
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-medium text-[#00334F]"
+                  >
+                    Contraseña
+                  </label>
+
+                  {/* ================================
+                      OLVIDASTE TU CONTRASEÑA
+                  ================================= */}
+
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    disabled={loading}
+                    className="text-xs font-medium text-[#0369A1] hover:text-[#0C4A6E] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </button>
+
+                </div>
+
+                <div className="relative">
+
+                  <input
+                    id="password"
+                    type={
+                      showPassword
+                        ? "text"
+                        : "password"
+                    }
+                    value={password}
+                    onChange={(event) =>
+                      setPassword(event.target.value)
+                    }
+                    placeholder="Ingresa tu contraseña"
+                    autoComplete="current-password"
+                    disabled={loading}
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 pr-12 text-sm outline-none transition focus:border-[#0369A1] focus:ring-2 focus:ring-[#0369A1]/10 disabled:bg-gray-100"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setShowPassword(
+                        (value) => !value
+                      )
+                    }
+                    disabled={loading}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#0369A1] disabled:cursor-not-allowed"
+                    aria-label={
+                      showPassword
+                        ? "Ocultar contraseña"
+                        : "Mostrar contraseña"
+                    }
+                  >
+                    {showPassword ? (
+                      <EyeOff size={20} />
+                    ) : (
+                      <Eye size={20} />
+                    )}
+                  </button>
+
+                </div>
+
+              </div>
+
+              {/* BOTÓN INICIAR SESIÓN */}
+
+              <button
+                type="submit"
+                disabled={
+                  loading ||
+                  !correo.trim() ||
+                  !password
+                }
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#0369A1] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#0C4A6E] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+
+                {loading ? (
+                  <>
+                    <LoaderCircle
+                      size={19}
+                      className="animate-spin"
+                    />
+
+                    Iniciando sesión...
+                  </>
+                ) : (
+                  <>
+                    <LogIn size={19} />
+
+                    Iniciar sesión
+                  </>
+                )}
+
+              </button>
+
+            </form>
+
+            {/* REGISTRO */}
+
+            <div className="mt-7 border-t border-gray-200 pt-6 text-center">
+
+              <p className="text-sm text-gray-500">
+                ¿Todavía no tienes una cuenta?
+              </p>
+
+              <Link
+                to="/registro"
+                className="mt-1 inline-block text-sm font-semibold text-[#0369A1] hover:text-[#0C4A6E]"
+              >
+                Crear una cuenta
+              </Link>
+
+            </div>
+
+          </div>
+
+          <p className="mt-5 text-center text-xs text-gray-400">
+            Tu sesión se gestiona de forma segura mediante Supabase.
+          </p>
+
+        </div>
+
       </main>
+
     </div>
   );
 }
 
-export default IncioS;
+export default InicioS;
