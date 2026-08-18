@@ -1,19 +1,19 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Activity, ArrowLeft } from 'lucide-react'; // <-- IMPORTAMOS ArrowLeft
-import { supabase } from '../../config/supabase'; // Ruta a tu cliente de Supabase
+import { Activity, ArrowLeft } from 'lucide-react';
+import { supabase } from '../../config/supabase';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMensaje, setErrorMensaje] = useState('');
-  const [loading, setLoading] = useState(false); // Estado para evitar múltiples clics
+  const [loading, setLoading] = useState(false);
   
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setErrorMensaje(''); // Limpiamos errores previos
+    setErrorMensaje('');
     setLoading(true);
 
     try {
@@ -29,7 +29,7 @@ export default function Login() {
       }
 
       if (data.user) {
-        // ¡Inicio de sesión exitoso! Redirigimos a la pantalla principal
+        // Redirige directamente al panel del usuario al iniciar sesión
         navigate('/inicioS', { replace: true });
       }
     } catch (err) {
@@ -42,7 +42,6 @@ export default function Login() {
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#FAF7F2]">
       
-      {/* 1. VIDEO DE FONDO INMERSIVO */}
       <video 
         autoPlay 
         loop 
@@ -52,12 +51,8 @@ export default function Login() {
         src="/imagenes/2.fondo-diagnohealth.mp4" 
       />
 
-      {/* Capa oscura semitransparente para que el formulario y texto resalten */}
       <div className="absolute inset-0 z-10 bg-black/40"></div>
 
-      {/* =========================================
-          NUEVO: BOTÓN VOLVER ATRÁS
-      ========================================= */}
       <Link 
         to="/" 
         className="absolute top-8 left-8 z-30 flex items-center justify-center rounded-full bg-white/20 p-2 text-white backdrop-blur-md transition-all hover:bg-white/40 focus:outline-none focus:ring-2 focus:ring-white sm:top-10 sm:left-10"
@@ -66,11 +61,9 @@ export default function Login() {
         <ArrowLeft size={24} aria-hidden="true" />
       </Link>
 
-      {/* 2. FORMULARIO CON EFECTO GLASSMORPHISM */}
       <div className="relative z-20 w-full max-w-md p-6 sm:p-8">
         <div className="rounded-3xl bg-white/90 px-8 py-10 shadow-2xl backdrop-blur-md sm:px-10">
           
-          {/* Encabezado */}
           <div className="mb-8 text-center">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#0C4A6E] text-white">
               <Activity size={24} />
@@ -81,7 +74,6 @@ export default function Login() {
             </p>
           </div>
 
-          {/* Mensaje de error si las credenciales fallan */}
           {errorMensaje && (
             <div role="alert" className="mb-6 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
               {errorMensaje}
@@ -131,7 +123,6 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Enlace a Registro */}
           <div className="mt-8 text-center text-sm text-gray-600">
             ¿No tienes cuenta?{' '}
             <Link to="/registro" className="font-semibold text-[#0C4A6E] hover:underline">

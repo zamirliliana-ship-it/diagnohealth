@@ -11,18 +11,15 @@ import { supabase } from "./config/supabase";
 
 import Landing from "./Pages/Home/Landing";
 import Login from "./Pages/Home/Login"; 
-import InicioS from "./Pages/Home/InicioS";
+import PanelUsuario from "./Pages/Home/PanelUsuario"; // <-- Tu panel de usuario principal
+import MiProgreso from "./Pages/Home/MiProgreso";   
 import Registro from "./Pages/Home/Registro";
 import Chatbot from "./Pages/Home/Chatbot";
 import CrisisAlert from "./Pages/Home/CrisisAlert";
 import CerrarSesion from "./Pages/Home/CerrarSesion";
 import RecuperarPassword from "./Pages/Home/RecuperarPassword";
 import RestablecerPassword from "./Pages/Home/RestablecerPassword";
-import TestBienestar from "./Pages/Home/TestBienestar"; // <-- IMPORTACIÓN DEL TEST
-
-// ============================================================
-// RUTA PROTEGIDA
-// ============================================================
+import TestBienestar from "./Pages/Home/TestBienestar";
 
 function ProtectedRoute({ children }) {
   const location = useLocation();
@@ -100,20 +97,11 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
-// ============================================================
-// CONTENIDO DE LA APLICACIÓN
-// ============================================================
-
 function AppContent() {
   return (
     <Routes>
-      {/* RUTA PRINCIPAL */}
       <Route path="/" element={<Landing />} />
-
-      {/* RUTA PÚBLICA DEL TEST */}
       <Route path="/test-bienestar" element={<TestBienestar />} />
-
-      {/* AUTENTICACIÓN Y RUTAS */}
       <Route path="/login" element={<Login />} />
       <Route path="/registro" element={<Registro />} />
       <Route path="/recuperar-password" element={<RecuperarPassword />} />
@@ -121,12 +109,23 @@ function AppContent() {
       <Route path="/crisisAlert" element={<CrisisAlert />} />
       <Route path="/crisis-alert" element={<CrisisAlert />} />
 
-      {/* RUTAS PROTEGIDAS */}
+      {/* ======================================================
+          LO PRIMERO QUE VE EL USUARIO AL INICIAR SESIÓN (/inicioS)
+      ====================================================== */}
       <Route
         path="/inicioS"
         element={
           <ProtectedRoute>
-            <InicioS />
+            <PanelUsuario />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/mi-progreso"
+        element={
+          <ProtectedRoute>
+            <MiProgreso />
           </ProtectedRoute>
         }
       />
@@ -158,7 +157,6 @@ function AppContent() {
         }
       />
 
-      {/* RUTA DESCONOCIDA */}
       <Route
         path="*"
         element={
@@ -171,10 +169,6 @@ function AppContent() {
     </Routes>
   );
 }
-
-// ============================================================
-// APP PRINCIPAL
-// ============================================================
 
 function App() {
   return (
