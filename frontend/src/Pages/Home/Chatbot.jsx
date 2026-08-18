@@ -1,485 +1,698 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-
-import {
-  Send,
-  Menu,
-  X,
-  LogOut,
-  User,
-  AlertTriangle,
-  MessageSquare,
-  Plus,
-  Bot,
-} from "lucide-react";
-
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../../config/supabase";
+
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 function Chatbot() {
   const navigate = useNavigate();
 
-  const [user, setUser] = useState(null);
-  const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState([]);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [messages, setMessages] = useState([
+    {
+      id: 1,
+      sender: "ai",
+      text: "Hola, soy YAIRA IA. Estoy aquí para escucharte y acompañarte. ¿Cómo te sientes hoy?",
+      time: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    },
+  ]);
 
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [session, setSession] = useState(null);
+  const [error, setError] = useState("");
+
+  const textareaRef = useRef(null);
   const messagesEndRef = useRef(null);
 
-  /* =========================================================
-     OBTENER USUARIO
-  ========================================================= */
+  // ============================================================
+  // OBTENER SESIÓN
+  // ============================================================
 
   useEffect(() => {
     let mounted = true;
 
-    const loadUser = async () => {
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
+    const loadSession = async () => {
+      try {
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
 
-      if (error) {
-        console.error("Error obteniendo usuario:", error);
-        return;
-      }
+        if (error) {
+          console.error(
+            "Error obteniendo sesión:",
+            error
+          );
 
-      if (mounted) {
-        setUser(user);
+          if (mounted) {
+            setError(
+              "No fue posible verificar tu sesión."
+            );
+          }
+
+          return;
+        }
+
+        if (!session) {
+          navigate("/inicioS", {
+            replace: true,
+          });
+
+          return;
+        }
+
+        if (mounted) {
+          setSession(session);
+        }
+      } catch (err) {
+        console.error(
+          "Error verificando sesión:",
+          err
+        );
+
+        if (mounted) {
+          setError(
+            "No fue posible verificar tu sesión."
+          );
+        }
       }
     };
 
-    loadUser();
+    loadSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(
+      (_event, newSession) => {
+        if (!newSession) {
+          navigate("/inicioS", {
+            replace: true,
+          });
+
+          return;
+        }
+
+        if (mounted) {
+          setSession(newSession);
+        }
+      }
+    );
 
     return () => {
       mounted = false;
+      subscription.unsubscribe();
     };
-  }, []);
+  }, [navigate]);
 
-  /* =========================================================
-     MENSAJE INICIAL
-  ========================================================= */
-
-  useEffect(() => {
-    setMessages([
-      {
-        id: "welcome",
-        role: "assistant",
-        content:
-          "Hola, soy el asistente de DiagnoHealth. Estoy aquí para escucharte y acompañarte. ¿Cómo te sientes hoy?",
-      },
-    ]);
-  }, []);
-
-  /* =========================================================
-     SCROLL
-  ========================================================= */
+  // ============================================================
+  // SCROLL AUTOMÁTICO
+  // ============================================================
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
       behavior: "smooth",
     });
-  }, [messages]);
+  }, [messages, loading]);
 
-  /* =========================================================
-     ENVIAR MENSAJE
-  ========================================================= */
+  // ============================================================
+  // AUTOFOCUS
+  // ============================================================
 
-  const handleSend = async (event) => {
-    event?.preventDefault();
+  useEffect(() => {
+    textareaRef.current?.focus();
+  }, []);
 
+  // ============================================================
+  // AJUSTAR ALTURA DEL TEXTAREA
+  // ============================================================
+
+  const handleTextareaChange = (event) => {
+    setMessage(event.target.value);
+
+    const textarea = event.target;
+
+    textarea.style.height = "auto";
+
+    textarea.style.height = `${Math.min(
+      textarea.scrollHeight,
+      150
+    )}px`;
+  };
+
+  // ============================================================
+  // ENVIAR MENSAJE
+  // ============================================================
+
+  const handleSendMessage = async () => {
     const text = message.trim();
 
     if (!text || loading) {
       return;
     }
 
+    setError("");
+
+    const now = new Date().toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
     const userMessage = {
       id: Date.now(),
-      role: "user",
-      content: text,
+      sender: "user",
+      text,
+      time: now,
     };
 
-    setMessages((previous) => [
-      ...previous,
+    // Guardamos los mensajes anteriores antes de agregar
+    // el mensaje actual.
+    const previousMessages = [...messages];
+
+    setMessages((prev) => [
+      ...prev,
       userMessage,
     ]);
 
     setMessage("");
+
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
+
     setLoading(true);
 
     try {
-      /*
-       * Aquí posteriormente conectaremos el chatbot
-       * con el backend de DiagnoHealth.
-       *
-       * Por ahora dejamos una respuesta local para que
-       * la pantalla funcione sin romperse.
-       */
+      let currentSession = session;
 
-      await new Promise((resolve) =>
-        setTimeout(resolve, 700)
+      // ========================================================
+      // SI NO TENEMOS SESIÓN, LA OBTENEMOS NUEVAMENTE
+      // ========================================================
+
+      if (!currentSession) {
+        const {
+          data,
+          error: sessionError,
+        } = await supabase.auth.getSession();
+
+        if (
+          sessionError ||
+          !data?.session
+        ) {
+          throw new Error(
+            "Tu sesión ha expirado. Inicia sesión nuevamente."
+          );
+        }
+
+        currentSession = data.session;
+
+        setSession(currentSession);
+      }
+
+      // ========================================================
+      // REFRESCAR TOKEN SI ES NECESARIO
+      // ========================================================
+
+      const {
+        data: refreshedData,
+        error: refreshError,
+      } = await supabase.auth.refreshSession();
+
+      if (
+        !refreshError &&
+        refreshedData?.session
+      ) {
+        currentSession =
+          refreshedData.session;
+
+        setSession(currentSession);
+      }
+
+      if (!currentSession?.access_token) {
+        throw new Error(
+          "No se encontró un token de autenticación válido."
+        );
+      }
+
+      // ========================================================
+      // HISTORIAL QUE SE ENVÍA AL BACKEND
+      // ========================================================
+
+      const history = previousMessages
+        .filter(
+          (item) =>
+            item.sender === "user" ||
+            item.sender === "ai"
+        )
+        .slice(-12)
+        .map((item) => ({
+          sender: item.sender,
+          text: item.text,
+        }));
+
+      // ========================================================
+      // LLAMADA AL BACKEND
+      // ========================================================
+
+      const response = await fetch(
+        `${API_URL}/api/chat`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${currentSession.access_token}`,
+          },
+
+          body: JSON.stringify({
+            message: text,
+            history,
+          }),
+        }
       );
 
-      const assistantMessage = {
+      let data;
+
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error(
+          "El servidor devolvió una respuesta inválida."
+        );
+      }
+
+      if (!response.ok || !data?.ok) {
+        if (response.status === 401) {
+          await supabase.auth.signOut();
+
+          navigate("/inicioS", {
+            replace: true,
+          });
+
+          throw new Error(
+            "Tu sesión ha expirado. Inicia sesión nuevamente."
+          );
+        }
+
+        throw new Error(
+          data?.message ||
+            "No fue posible obtener una respuesta de YAIRA."
+        );
+      }
+
+      // ========================================================
+      // RESPUESTA DE YAIRA
+      // ========================================================
+
+      const aiMessage = {
         id: Date.now() + 1,
-        role: "assistant",
-        content:
-          "Gracias por compartirlo conmigo. Puedes contarme un poco más sobre cómo te has estado sintiendo.",
+        sender: "ai",
+        text:
+          data.message ||
+          "No pude generar una respuesta en este momento.",
+        time: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
       };
 
-      setMessages((previous) => [
-        ...previous,
-        assistantMessage,
+      setMessages((prev) => [
+        ...prev,
+        aiMessage,
       ]);
-    } catch (error) {
-      console.error("Error enviando mensaje:", error);
+    } catch (err) {
+      console.error(
+        "Error comunicando con YAIRA:",
+        err
+      );
 
-      setMessages((previous) => [
-        ...previous,
+      const errorMessage =
+        err?.message ||
+        "No pude conectarme con YAIRA en este momento.";
+
+      setError(errorMessage);
+
+      setMessages((prev) => [
+        ...prev,
         {
           id: Date.now() + 2,
-          role: "assistant",
-          content:
-            "Lo siento, ocurrió un problema al procesar tu mensaje. Inténtalo nuevamente.",
+          sender: "ai",
+          text:
+            "Lo siento, tuve un problema para responderte. " +
+            "Puedes intentarlo nuevamente en unos segundos.",
+          time: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
         },
       ]);
     } finally {
       setLoading(false);
+
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 50);
     }
   };
 
-  /* =========================================================
-     CERRAR SESIÓN
-  ========================================================= */
+  // ============================================================
+  // ENTER / SHIFT + ENTER
+  // ============================================================
 
-  const handleLogout = () => {
-    navigate("/cerrar-sesion");
+  const handleKeyDown = (event) => {
+    if (
+      event.key === "Enter" &&
+      !event.shiftKey
+    ) {
+      event.preventDefault();
+
+      handleSendMessage();
+    }
   };
 
-  /* =========================================================
-     NUEVA CONVERSACIÓN
-  ========================================================= */
+  // ============================================================
+  // NUEVA CONVERSACIÓN
+  // ============================================================
 
-  const handleNewChat = () => {
+  const handleNewConversation = () => {
+    if (loading) {
+      return;
+    }
+
     setMessages([
       {
         id: Date.now(),
-        role: "assistant",
-        content:
-          "Nueva conversación iniciada. ¿Cómo puedo acompañarte hoy?",
+        sender: "ai",
+        text: "Nueva conversación iniciada. Estoy aquí para escucharte. ¿Qué quieres contarme?",
+        time: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
       },
     ]);
 
-    setMenuOpen(false);
+    setMessage("");
+    setError("");
+
+    setTimeout(() => {
+      textareaRef.current?.focus();
+    }, 50);
   };
 
+  // ============================================================
+  // CERRAR SESIÓN
+  // ============================================================
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+
+      navigate("/inicioS", {
+        replace: true,
+      });
+    } catch (err) {
+      console.error(
+        "Error cerrando sesión:",
+        err
+      );
+    }
+  };
+
+  // ============================================================
+  // CRISIS
+  // ============================================================
+
+  const handleCrisis = () => {
+    navigate("/crisis-alert");
+  };
+
+  // ============================================================
+  // LOADING DE SESIÓN
+  // ============================================================
+
+  if (!session) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#FAF7F2]">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-[#0369A1]/20 border-t-[#0369A1]" />
+
+          <p className="text-sm text-gray-500">
+            Verificando sesión...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ============================================================
+  // INTERFAZ
+  // ============================================================
+
   return (
-    <div className="min-h-screen bg-[#FAF7F2] text-[#1B1C1A]">
+    <div className="flex min-h-screen bg-[#FAF7F2] text-gray-800">
 
-      {/* =====================================================
-          BOTÓN MENÚ MÓVIL
-      ====================================================== */}
-
-      <button
-        type="button"
-        onClick={() =>
-          setMenuOpen((value) => !value)
-        }
-        className="fixed left-4 top-4 z-[60] rounded-lg bg-[#0C4A6E] p-2 text-white shadow-md md:hidden"
-        aria-label="Abrir menú"
-      >
-        {menuOpen ? (
-          <X size={24} />
-        ) : (
-          <Menu size={24} />
-        )}
-      </button>
-
-      {/* =====================================================
+      {/* ======================================================
           SIDEBAR
-      ====================================================== */}
+      ======================================================= */}
 
-      <aside
-        className={`
-          fixed left-0 top-0 z-50 flex h-screen w-64
-          flex-col bg-[#0C4A6E] text-white shadow-xl
-          transition-transform duration-300
-          md:translate-x-0
-          ${
-            menuOpen
-              ? "translate-x-0"
-              : "-translate-x-full"
-          }
-        `}
-      >
+      <aside className="hidden w-72 flex-col border-r border-gray-200 bg-white md:flex">
 
-        <div className="flex h-20 items-center border-b border-white/10 px-5">
-          <Link
-            to="/"
-            className="flex items-center gap-3"
-          >
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white font-bold text-[#0C4A6E]">
-              D
-            </div>
+        <div className="border-b border-gray-200 p-5">
+          <h1 className="text-xl font-bold text-[#0369A1]">
+            DiagnoHealth
+          </h1>
 
-            <span className="text-lg font-bold">
-              DIAGNOHEALTH
-            </span>
-          </Link>
+          <p className="mt-1 text-sm text-gray-500">
+            Bienestar emocional
+          </p>
         </div>
 
-        <nav className="flex-1 space-y-2 px-3 py-7">
-
-          <Link
-            to="/chatbot"
-            onClick={() => setMenuOpen(false)}
-            className="flex items-center gap-4 rounded-lg bg-white/10 px-4 py-3 text-sm text-white"
-          >
-            <MessageSquare size={20} />
-            Chat con IA
-          </Link>
+        <div className="flex-1 p-4">
 
           <button
             type="button"
-            onClick={handleNewChat}
-            className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left text-sm text-white/80 hover:bg-white/10"
+            onClick={handleNewConversation}
+            disabled={loading}
+            className="mb-4 w-full rounded-xl bg-[#0369A1] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#075985] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Plus size={20} />
-            Nueva conversación
+            + Nueva conversación
           </button>
 
-          <Link
-            to="/inicioS"
-            onClick={() => setMenuOpen(false)}
-            className="flex items-center gap-4 rounded-lg px-4 py-3 text-sm text-white/80 hover:bg-white/10"
+          <button
+            type="button"
+            onClick={() =>
+              navigate("/crisis-alert")
+            }
+            className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100"
           >
-            <User size={20} />
-            Perfil
-          </Link>
+            🚨 Necesito ayuda
+          </button>
+
+        </div>
+
+        <div className="border-t border-gray-200 p-4">
 
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left text-sm text-white/80 hover:bg-white/10"
+            className="w-full rounded-xl px-4 py-3 text-left text-sm text-gray-600 transition hover:bg-gray-100"
           >
-            <LogOut size={20} />
             Cerrar sesión
           </button>
-
-        </nav>
-
-        <div className="px-4 pb-6">
-
-          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-
-            <p className="text-sm font-medium">
-              Bienvenido
-            </p>
-
-            <p className="mt-1 truncate text-xs text-white/60">
-              {user?.email || "Usuario"}
-            </p>
-
-          </div>
 
         </div>
 
       </aside>
 
-      {/* OVERLAY MÓVIL */}
+      {/* ======================================================
+          CHAT
+      ======================================================= */}
 
-      {menuOpen && (
-        <button
-          type="button"
-          onClick={() => setMenuOpen(false)}
-          className="fixed inset-0 z-40 bg-black/40 md:hidden"
-          aria-label="Cerrar menú"
-        />
-      )}
-
-      {/* =====================================================
-          CONTENIDO
-      ====================================================== */}
-
-      <main className="ml-0 flex min-h-screen flex-col md:ml-64">
+      <main className="flex min-h-screen flex-1 flex-col">
 
         {/* HEADER */}
 
-        <header className="border-b border-gray-200 bg-white px-4 py-5 sm:px-6">
+        <header className="border-b border-gray-200 bg-white px-4 py-4 md:px-8">
 
-          <div className="pl-12 md:pl-0">
+          <div className="mx-auto flex max-w-5xl items-center justify-between">
 
-            <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">
+                YAIRA IA
+              </h2>
 
-              <div>
-
-                <h1 className="text-2xl font-bold text-[#00334F]">
-                  Chat con IA
-                </h1>
-
-                <p className="mt-1 text-sm text-gray-500">
-                  Un espacio para hablar y cuidar tu bienestar.
-                </p>
-
-              </div>
-
-              <button
-                type="button"
-                onClick={() =>
-                  navigate("/crisis-alert")
-                }
-                className="flex shrink-0 items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100"
-              >
-                <AlertTriangle size={16} />
-                <span className="hidden sm:inline">
-                  Ayuda
-                </span>
-              </button>
-
+              <p className="text-sm text-gray-500">
+                Tu asistente de bienestar emocional
+              </p>
             </div>
+
+            <button
+              type="button"
+              onClick={handleCrisis}
+              className="rounded-xl bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
+            >
+              🚨 Crisis
+            </button>
 
           </div>
 
         </header>
 
-        {/* CHAT */}
+        {/* MENSAJES */}
 
-        <section className="flex flex-1 flex-col">
+        <section className="flex-1 overflow-y-auto px-4 py-6 md:px-8">
 
-          <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-4 py-6 sm:px-6">
+          <div className="mx-auto max-w-4xl space-y-5">
 
-            {/* MENSAJES */}
+            {messages.map((item) => (
+              <div
+                key={item.id}
+                className={`flex ${
+                  item.sender === "user"
+                    ? "justify-end"
+                    : "justify-start"
+                }`}
+              >
 
-            <div className="flex-1 space-y-5 overflow-y-auto pb-6">
-
-              {messages.map((item) => (
                 <div
-                  key={item.id}
-                  className={`flex ${
-                    item.role === "user"
-                      ? "justify-end"
-                      : "justify-start"
+                  className={`max-w-[85%] rounded-2xl px-4 py-3 shadow-sm ${
+                    item.sender === "user"
+                      ? "rounded-br-md bg-[#0369A1] text-white"
+                      : "rounded-bl-md border border-gray-200 bg-white text-gray-800"
                   }`}
                 >
 
-                  <div
-                    className={`flex max-w-[90%] gap-3 sm:max-w-[75%] ${
-                      item.role === "user"
-                        ? "flex-row-reverse"
-                        : ""
+                  <p className="whitespace-pre-wrap text-sm leading-6">
+                    {item.text}
+                  </p>
+
+                  <p
+                    className={`mt-2 text-[11px] ${
+                      item.sender === "user"
+                        ? "text-white/70"
+                        : "text-gray-400"
                     }`}
                   >
-
-                    <div
-                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
-                        item.role === "user"
-                          ? "bg-[#0369A1] text-white"
-                          : "bg-[#0C4A6E] text-white"
-                      }`}
-                    >
-                      {item.role === "user" ? (
-                        <User size={18} />
-                      ) : (
-                        <Bot size={18} />
-                      )}
-                    </div>
-
-                    <div
-                      className={`rounded-2xl px-4 py-3 text-sm leading-6 shadow-sm ${
-                        item.role === "user"
-                          ? "rounded-tr-md bg-[#0369A1] text-white"
-                          : "rounded-tl-md border border-gray-200 bg-white text-gray-700"
-                      }`}
-                    >
-                      {item.content}
-                    </div>
-
-                  </div>
-
-                </div>
-              ))}
-
-              {loading && (
-                <div className="flex items-center gap-3">
-
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0C4A6E] text-white">
-                    <Bot size={18} />
-                  </div>
-
-                  <div className="rounded-2xl rounded-tl-md border border-gray-200 bg-white px-4 py-3 shadow-sm">
-
-                    <div className="flex gap-1">
-                      <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" />
-                      <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400 [animation-delay:150ms]" />
-                      <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400 [animation-delay:300ms]" />
-                    </div>
-
-                  </div>
-
-                </div>
-              )}
-
-              <div ref={messagesEndRef} />
-
-            </div>
-
-            {/* INPUT */}
-
-            <form
-              onSubmit={handleSend}
-              className="sticky bottom-0"
-            >
-
-              <div className="rounded-2xl border border-gray-200 bg-white p-2 shadow-lg">
-
-                <div className="flex items-end gap-2">
-
-                  <textarea
-                    value={message}
-                    onChange={(event) =>
-                      setMessage(event.target.value)
-                    }
-                    onKeyDown={(event) => {
-                      if (
-                        event.key === "Enter" &&
-                        !event.shiftKey
-                      ) {
-                        event.preventDefault();
-                        handleSend(event);
-                      }
-                    }}
-                    rows={1}
-                    placeholder="Escribe cómo te sientes..."
-                    className="max-h-32 min-h-[44px] flex-1 resize-none border-0 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-gray-400"
-                    disabled={loading}
-                  />
-
-                  <button
-                    type="submit"
-                    disabled={
-                      loading ||
-                      !message.trim()
-                    }
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#0369A1] text-white transition hover:bg-[#0C4A6E] disabled:cursor-not-allowed disabled:opacity-40"
-                    aria-label="Enviar mensaje"
-                  >
-                    <Send size={18} />
-                  </button>
+                    {item.time}
+                  </p>
 
                 </div>
 
               </div>
+            ))}
 
-              <p className="mt-2 text-center text-[11px] text-gray-400">
-                DiagnoHealth es una herramienta de acompañamiento y no reemplaza la atención profesional.
-              </p>
+            {/* PENSANDO */}
 
-            </form>
+            {loading && (
+              <div className="flex justify-start">
+
+                <div className="rounded-2xl rounded-bl-md border border-gray-200 bg-white px-4 py-3 shadow-sm">
+
+                  <div className="flex items-center gap-2">
+
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" />
+
+                    <span
+                      className="h-2 w-2 animate-bounce rounded-full bg-gray-400"
+                      style={{
+                        animationDelay: "0.15s",
+                      }}
+                    />
+
+                    <span
+                      className="h-2 w-2 animate-bounce rounded-full bg-gray-400"
+                      style={{
+                        animationDelay: "0.3s",
+                      }}
+                    />
+
+                    <span className="ml-1 text-xs text-gray-400">
+                      YAIRA está pensando...
+                    </span>
+
+                  </div>
+
+                </div>
+
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
 
           </div>
 
         </section>
+
+        {/* ERROR */}
+
+        {error && (
+          <div className="px-4 md:px-8">
+
+            <div className="mx-auto mb-3 max-w-4xl rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+            </div>
+
+          </div>
+        )}
+
+        {/* INPUT */}
+
+        <footer className="border-t border-gray-200 bg-white px-4 py-4 md:px-8">
+
+          <div className="mx-auto max-w-4xl">
+
+            <div className="flex items-end gap-3 rounded-2xl border border-gray-300 bg-gray-50 p-2 focus-within:border-[#0369A1] focus-within:ring-2 focus-within:ring-[#0369A1]/10">
+
+              <textarea
+                ref={textareaRef}
+                value={message}
+                onChange={handleTextareaChange}
+                onKeyDown={handleKeyDown}
+                disabled={loading}
+                rows={1}
+                maxLength={2000}
+                placeholder="Escribe cómo te sientes..."
+                className="max-h-[150px] min-h-[44px] flex-1 resize-none bg-transparent px-3 py-2 text-sm outline-none placeholder:text-gray-400 disabled:cursor-not-allowed"
+              />
+
+              <button
+                type="button"
+                onClick={handleSendMessage}
+                disabled={
+                  loading ||
+                  !message.trim()
+                }
+                className="rounded-xl bg-[#0369A1] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#075985] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {loading
+                  ? "..."
+                  : "Enviar"}
+              </button>
+
+            </div>
+
+            <div className="mt-2 flex items-center justify-between">
+
+              <p className="text-[11px] text-gray-400">
+                Enter para enviar · Shift + Enter para nueva línea
+              </p>
+
+              <p className="text-[11px] text-gray-400">
+                {message.length}/2000
+              </p>
+
+            </div>
+
+            <p className="mt-2 text-center text-[11px] text-gray-400">
+              YAIRA IA brinda acompañamiento emocional y no sustituye atención profesional.
+            </p>
+
+          </div>
+
+        </footer>
 
       </main>
 

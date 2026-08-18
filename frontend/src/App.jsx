@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-
 import {
   BrowserRouter as Router,
   Routes,
@@ -11,6 +10,7 @@ import {
 import { supabase } from "./config/supabase";
 
 import Landing from "./Pages/Home/Landing";
+import Login from "./Pages/Home/Login"; 
 import InicioS from "./Pages/Home/InicioS";
 import Registro from "./Pages/Home/Registro";
 import Chatbot from "./Pages/Home/Chatbot";
@@ -18,6 +18,7 @@ import CrisisAlert from "./Pages/Home/CrisisAlert";
 import CerrarSesion from "./Pages/Home/CerrarSesion";
 import RecuperarPassword from "./Pages/Home/RecuperarPassword";
 import RestablecerPassword from "./Pages/Home/RestablecerPassword";
+import TestBienestar from "./Pages/Home/TestBienestar"; // <-- IMPORTACIÓN DEL TEST
 
 // ============================================================
 // RUTA PROTEGIDA
@@ -25,13 +26,12 @@ import RestablecerPassword from "./Pages/Home/RestablecerPassword";
 
 function ProtectedRoute({ children }) {
   const location = useLocation();
-
   const [session, setSession] = useState(undefined);
 
   useEffect(() => {
     let mounted = true;
 
-    const checkSession = async () => {
+    const getSession = async () => {
       try {
         const {
           data: { session },
@@ -39,20 +39,14 @@ function ProtectedRoute({ children }) {
         } = await supabase.auth.getSession();
 
         if (error) {
-          console.error(
-            "Error obteniendo sesión:",
-            error
-          );
+          console.error("Error obteniendo sesión:", error);
         }
 
         if (mounted) {
           setSession(session);
         }
       } catch (error) {
-        console.error(
-          "Error verificando sesión:",
-          error
-        );
+        console.error("Error verificando sesión:", error);
 
         if (mounted) {
           setSession(null);
@@ -60,7 +54,7 @@ function ProtectedRoute({ children }) {
       }
     };
 
-    checkSession();
+    getSession();
 
     const {
       data: { subscription },
@@ -78,36 +72,23 @@ function ProtectedRoute({ children }) {
     };
   }, []);
 
-  // ==========================================================
-  // VERIFICANDO SESIÓN
-  // ==========================================================
-
   if (session === undefined) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#FAF7F2]">
-
         <div className="text-center">
-
           <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-[#0369A1]/20 border-t-[#0369A1]" />
-
           <p className="text-sm text-gray-500">
             Verificando sesión...
           </p>
-
         </div>
-
       </div>
     );
   }
 
-  // ==========================================================
-  // NO AUTENTICADO
-  // ==========================================================
-
   if (!session) {
     return (
       <Navigate
-        to="/inicioS"
+        to="/login"
         replace
         state={{
           from: location.pathname,
@@ -116,83 +97,39 @@ function ProtectedRoute({ children }) {
     );
   }
 
-  // ==========================================================
-  // AUTENTICADO
-  // ==========================================================
-
   return children;
 }
 
 // ============================================================
-// APP
+// CONTENIDO DE LA APLICACIÓN
 // ============================================================
 
 function AppContent() {
   return (
     <Routes>
+      {/* RUTA PRINCIPAL */}
+      <Route path="/" element={<Landing />} />
 
-      {/* ======================================================
-          LANDING
-          Esta es SIEMPRE la página inicial
-      ======================================================= */}
+      {/* RUTA PÚBLICA DEL TEST */}
+      <Route path="/test-bienestar" element={<TestBienestar />} />
 
-      <Route
-        path="/"
-        element={<Landing />}
-      />
+      {/* AUTENTICACIÓN Y RUTAS */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/registro" element={<Registro />} />
+      <Route path="/recuperar-password" element={<RecuperarPassword />} />
+      <Route path="/restablecer-password" element={<RestablecerPassword />} />
+      <Route path="/crisisAlert" element={<CrisisAlert />} />
+      <Route path="/crisis-alert" element={<CrisisAlert />} />
 
-      {/* ======================================================
-          AUTENTICACIÓN
-      ======================================================= */}
-
+      {/* RUTAS PROTEGIDAS */}
       <Route
         path="/inicioS"
-        element={<InicioS />}
+        element={
+          <ProtectedRoute>
+            <InicioS />
+          </ProtectedRoute>
+        }
       />
-
-      <Route
-        path="/registro"
-        element={<Registro />}
-      />
-
-      {/* ======================================================
-          RECUPERAR CONTRASEÑA
-      ======================================================= */}
-
-      <Route
-        path="/recuperar-password"
-        element={<RecuperarPassword />}
-      />
-
-      {/* ======================================================
-          RESTABLECER CONTRASEÑA
-      ======================================================= */}
-
-      <Route
-        path="/restablecer-password"
-        element={<RestablecerPassword />}
-      />
-
-      {/* ======================================================
-          CRISIS ALERT
-          
-          Se mantiene pública porque una persona puede
-          necesitar acceder a ayuda inmediatamente.
-      ======================================================= */}
-
-      <Route
-        path="/crisisAlert"
-        element={<CrisisAlert />}
-      />
-
-      <Route
-        path="/crisis-alert"
-        element={<CrisisAlert />}
-      />
-
-      {/* ======================================================
-          CHATBOT PROTEGIDO
-      ======================================================= */}
 
       <Route
         path="/chatbot"
@@ -203,10 +140,6 @@ function AppContent() {
         }
       />
 
-      {/* ======================================================
-          CERRAR SESIÓN PROTEGIDO
-      ======================================================= */}
-
       <Route
         path="/cerrar-sesion"
         element={
@@ -215,8 +148,6 @@ function AppContent() {
           </ProtectedRoute>
         }
       />
-
-      {/* Compatibilidad con ruta anterior */}
 
       <Route
         path="/CerrarSesion"
@@ -227,14 +158,7 @@ function AppContent() {
         }
       />
 
-      {/* ======================================================
-          CUALQUIER RUTA DESCONOCIDA
-          
-          IMPORTANTE:
-          Si alguien entra directamente a una ruta inexistente,
-          lo mandamos a Landing.
-      ======================================================= */}
-
+      {/* RUTA DESCONOCIDA */}
       <Route
         path="*"
         element={
@@ -244,13 +168,12 @@ function AppContent() {
           />
         }
       />
-
     </Routes>
   );
 }
 
 // ============================================================
-// ROOT APP
+// APP PRINCIPAL
 // ============================================================
 
 function App() {

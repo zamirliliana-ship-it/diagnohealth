@@ -8,7 +8,7 @@ export const chat = async (req, res) => {
   try {
     const { message, history = [] } = req.body;
 
-    if (!message || !message.trim()) {
+    if (!message || typeof message !== "string" || !message.trim()) {
       return res.status(400).json({
         ok: false,
         message: "El mensaje es obligatorio.",
@@ -32,15 +32,22 @@ export const chat = async (req, res) => {
         role: "system",
         content:
           "Eres YAIRA IA, el asistente de bienestar emocional de DiagnoHealth. " +
-          "Habla en español, con empatía, claridad y respeto. " +
-          "No reemplazas a profesionales de salud. " +
+          "Responde siempre en español. " +
+          "Sé empática, clara, respetuosa y breve. " +
+          "Escucha primero y evita respuestas frías o robóticas. " +
           "No diagnostiques enfermedades. " +
-          "Si detectas una posible situación de crisis o riesgo inmediato, " +
-          "indica que la persona busque ayuda inmediata y utiliza el sistema de alerta de crisis de DiagnoHealth.",
+          "No afirmes que sustituyes a un psicólogo, médico u otro profesional. " +
+          "No inventes información personal del usuario. " +
+          "Si la persona expresa señales de una posible crisis, riesgo de hacerse daño, " +
+          "intención suicida o peligro inmediato, prioriza su seguridad, recomienda " +
+          "buscar ayuda inmediata y señala que puede utilizar la opción de ayuda de DiagnoHealth.",
       },
 
       ...cleanHistory.map((item) => ({
-        role: item.sender === "user" ? "user" : "assistant",
+        role:
+          item.sender === "user"
+            ? "user"
+            : "assistant",
         content: item.text,
       })),
 
@@ -55,11 +62,14 @@ export const chat = async (req, res) => {
       input,
     });
 
+    const answer =
+      response.output_text?.trim() ||
+      "No pude generar una respuesta en este momento.";
+
     return res.status(200).json({
       ok: true,
-      message: response.output_text,
+      message: answer,
     });
-
   } catch (error) {
     console.error("Error en chatbot:", error);
 

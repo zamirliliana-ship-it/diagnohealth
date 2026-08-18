@@ -1,8 +1,13 @@
 import supabase from "../config/supabase.js";
 
-export const requireAuth = async (req, res, next) => {
+export const requireAuth = async (
+  req,
+  res,
+  next
+) => {
   try {
-    const authorization = req.headers.authorization;
+    const authorization =
+      req.headers.authorization;
 
     if (!authorization) {
       return res.status(401).json({
@@ -11,12 +16,17 @@ export const requireAuth = async (req, res, next) => {
       });
     }
 
-    const [type, token] = authorization.split(" ");
+    const [type, token] =
+      authorization.split(" ");
 
-    if (type !== "Bearer" || !token) {
+    if (
+      type !== "Bearer" ||
+      !token
+    ) {
       return res.status(401).json({
         ok: false,
-        message: "Token de autenticación inválido.",
+        message:
+          "Token de autenticación inválido.",
       });
     }
 
@@ -28,14 +38,14 @@ export const requireAuth = async (req, res, next) => {
     if (error || !user) {
       return res.status(401).json({
         ok: false,
-        message: "La sesión no es válida o ha expirado.",
+        message:
+          "La sesión no es válida o ha expirado.",
       });
     }
 
     req.user = user;
 
     next();
-
   } catch (error) {
     console.error(
       "Error verificando autenticación:",
@@ -44,7 +54,8 @@ export const requireAuth = async (req, res, next) => {
 
     return res.status(401).json({
       ok: false,
-      message: "No fue posible verificar la sesión.",
+      message:
+        "No fue posible verificar el usuario.",
     });
   }
 };

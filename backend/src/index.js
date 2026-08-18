@@ -9,7 +9,8 @@ dotenv.config();
 
 const app = express();
 
-const PORT = process.env.PORT || 3000;
+const PORT =
+  process.env.PORT || 3000;
 
 const FRONTEND_URL =
   process.env.FRONTEND_URL ||
@@ -22,10 +23,14 @@ app.use(
   })
 );
 
-app.use(express.json());
+app.use(
+  express.json({
+    limit: "1mb",
+  })
+);
 
 app.get("/", (req, res) => {
-  res.json({
+  return res.status(200).json({
     ok: true,
     message:
       "La API de DiagnoHealth está funcionando correctamente.",
@@ -40,6 +45,30 @@ app.use(
 app.use(
   "/api/chat",
   chatRoutes
+);
+
+app.use(
+  (req, res) => {
+    return res.status(404).json({
+      ok: false,
+      message: "Ruta no encontrada.",
+    });
+  }
+);
+
+app.use(
+  (err, req, res, next) => {
+    console.error(
+      "Error interno del servidor:",
+      err
+    );
+
+    return res.status(500).json({
+      ok: false,
+      message:
+        "Error interno del servidor.",
+    });
+  }
 );
 
 app.listen(PORT, () => {
