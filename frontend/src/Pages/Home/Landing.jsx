@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Menu, ArrowRight, ArrowUpRight, Share2, Globe, Bot, Heart, Activity, ShieldCheck } from 'lucide-react';
+import { Menu, ArrowRight, ArrowUpRight, Share2, Globe, Bot, Heart, Activity, ShieldCheck, ClipboardList } from 'lucide-react';
 
 function Landing() {
   return (
@@ -10,7 +10,14 @@ function Landing() {
             DIAGNOHEALTH
           </div>
           <div className="hidden md:flex items-center gap-6">
-            <a className="px-4 py-2 text-sm text-[#0369A1] font-bold border-b-2 border-[#0369A1] transition-colors" href="#">Funcionalidades</a>
+            <a className="px-4 py-2 text-sm text-gray-600 font-bold transition-colors hover:text-[#0369A1]" href="#">Funcionalidades</a>
+            
+            {/* NUEVO: ENLACE AL TEST DE BIENESTAR (Corregido sin subrayado permanente) */}
+            <Link to="/test-bienestar" className="px-4 py-2 text-sm text-gray-600 font-bold hover:text-[#0369A1] flex items-center gap-1.5 transition-colors">
+              <ClipboardList size={16} aria-hidden="true" />
+              Test de Bienestar
+            </Link>
+
             <a className="px-4 py-2 text-sm text-gray-600 hover:text-[#0369A1] transition-colors" href="#">Recursos</a>
             <a className="px-4 py-2 text-sm text-gray-600 hover:text-[#0369A1] transition-colors" href="#">Comunidad</a>
             <a className="px-4 py-2 text-sm text-gray-600 hover:text-[#0369A1] transition-colors" href="#">Ayuda</a>

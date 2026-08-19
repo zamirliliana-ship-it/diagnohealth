@@ -3,9 +3,13 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error("Faltan SUPABASE_URL y SUPABASE_ANON_KEY en backend/.env");
+}
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default supabase;
