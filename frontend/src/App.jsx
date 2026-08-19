@@ -1,35 +1,3 @@
-
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Landing from "./Pages/Home/Landing";
-import IncioS from "./Pages/Home/InicioS";
-import Registro from "./Pages/Home/Registro";
-import DiagnoHealthApp from "./Pages/Admin/Admis";
-
-function AppContent() {
-  return (
-    <div>
-      <main>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/inicioS" element={<IncioS />} />
-          <Route path="/registro" element={<Registro />} />
-          <Route path="/admin" element={<DiagnoHealthApp />} />
-        </Routes>
-      </main>
-    </div>
-  );
-}
-
-const App = () => {
-  return (
-    <Router>
-      <AppContent />
-    </Router>
-  );
-};
-
-export default App;
-
 import { useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
@@ -42,9 +10,9 @@ import {
 import { supabase } from "./config/supabase";
 
 import Landing from "./Pages/Home/Landing";
-import Login from "./Pages/Home/Login"; 
-import PanelUsuario from "./Pages/Home/PanelUsuario"; // <-- Tu panel de usuario principal
-import MiProgreso from "./Pages/Home/MiProgreso";   
+import Login from "./Pages/Home/Login";
+import PanelUsuario from "./Pages/Home/PanelUsuario";
+import MiProgreso from "./Pages/Home/MiProgreso";
 import Registro from "./Pages/Home/Registro";
 import Chatbot from "./Pages/Home/Chatbot";
 import CrisisAlert from "./Pages/Home/CrisisAlert";
@@ -52,6 +20,7 @@ import CerrarSesion from "./Pages/Home/CerrarSesion";
 import RecuperarPassword from "./Pages/Home/RecuperarPassword";
 import RestablecerPassword from "./Pages/Home/RestablecerPassword";
 import TestBienestar from "./Pages/Home/TestBienestar";
+import AdminAuth from "./Pages/Admin/inicio-registro";
 
 function ProtectedRoute({ children }) {
   const location = useLocation();
@@ -87,13 +56,11 @@ function ProtectedRoute({ children }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(
-      (_event, newSession) => {
-        if (mounted) {
-          setSession(newSession);
-        }
+    } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      if (mounted) {
+        setSession(newSession);
       }
-    );
+    });
 
     return () => {
       mounted = false;
@@ -106,9 +73,7 @@ function ProtectedRoute({ children }) {
       <div className="flex min-h-screen items-center justify-center bg-[#FAF7F2]">
         <div className="text-center">
           <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-[#0369A1]/20 border-t-[#0369A1]" />
-          <p className="text-sm text-gray-500">
-            Verificando sesión...
-          </p>
+          <p className="text-sm text-gray-500">Verificando sesión...</p>
         </div>
       </div>
     );
@@ -140,10 +105,8 @@ function AppContent() {
       <Route path="/restablecer-password" element={<RestablecerPassword />} />
       <Route path="/crisisAlert" element={<CrisisAlert />} />
       <Route path="/crisis-alert" element={<CrisisAlert />} />
+      <Route path="/admin" element={<AdminAuth />} />
 
-      {/* ======================================================
-          LO PRIMERO QUE VE EL USUARIO AL INICIAR SESIÓN (/inicioS)
-      ====================================================== */}
       <Route
         path="/inicioS"
         element={
@@ -189,15 +152,7 @@ function AppContent() {
         }
       />
 
-      <Route
-        path="*"
-        element={
-          <Navigate
-            to="/"
-            replace
-          />
-        }
-      />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
