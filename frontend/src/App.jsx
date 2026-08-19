@@ -1,28 +1,30 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
-import Landing from "./Pages/Home/Landing"
-import IncioS from "./Pages/Home/InicioS"
-import Registro from "./Pages/Home/Registro"
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Landing from "./Pages/Home/Landing";
+import IncioS from "./Pages/Home/InicioS";
+import Registro from "./Pages/Home/Registro";
+import DiagnoHealthApp from "./Pages/Admin/Admis";
 
-function AppContent () {
-    return(
-        <div>
-            <main>
-                <Routes>
-                    <Route path="/" element={<Landing/>}/>
-                    <Route path="/inicioS" element={<IncioS/>}/>
-                    <Route path="/registro" element={<Registro/>}/>
-                </Routes>
-            </main>
-        </div>
-    )
+function AppContent() {
+  return (
+    <div>
+      <main>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/inicioS" element={<IncioS />} />
+          <Route path="/registro" element={<Registro />} />
+          <Route path="/admin" element={<DiagnoHealthApp />} />
+        </Routes>
+      </main>
+    </div>
+  );
 }
 
 const App = () => {
-    return (
-        <Router>
-            <AppContent />
-        </Router>
-    )
-}
+  return (
+    <Router>
+      <AppContent />
+    </Router>
+  );
+};
 
-export default App
+export default App;
