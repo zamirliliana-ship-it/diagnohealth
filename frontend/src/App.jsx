@@ -20,7 +20,7 @@ import CerrarSesion from "./Pages/Home/CerrarSesion";
 import RecuperarPassword from "./Pages/Home/RecuperarPassword";
 import RestablecerPassword from "./Pages/Home/RestablecerPassword";
 import TestBienestar from "./Pages/Home/TestBienestar";
-import AdminAuth from "./Pages/Admin/inicio-registro";
+import DiagnoHealthApp from "./Pages/Admin/Admis";
 
 function ProtectedRoute({ children }) {
   const location = useLocation();
@@ -105,7 +105,7 @@ function AppContent() {
       <Route path="/restablecer-password" element={<RestablecerPassword />} />
       <Route path="/crisisAlert" element={<CrisisAlert />} />
       <Route path="/crisis-alert" element={<CrisisAlert />} />
-      <Route path="/admin" element={<AdminAuth />} />
+      <Route path="/admin/admis" element={<DiagnoHealthApp />} />
 
       <Route
         path="/inicioS"

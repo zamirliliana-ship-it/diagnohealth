@@ -1,10 +1,15 @@
 import { createClient } from "@supabase/supabase-js";
 
-// Valores temporales para permitir que la app arranque visualmente
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://placeholder-project.supabase.co";
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder";
+const supabaseUrl =
+  import.meta.env.VITE_SUPABASE_URL ||
+  "https://placeholder-project.supabase.co";
+const supabaseAnonKey =
+  import.meta.env.VITE_SUPABASE_ANON_KEY || "placeholder-key";
 
-export const supabase = createClient(
-  supabaseUrl,
-  supabaseAnonKey
-);
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.warn(
+    "Faltan VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en frontend/.env",
+  );
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
