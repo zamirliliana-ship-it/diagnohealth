@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import {
   register,
+  login,
   me,
 } from "../controllers/auth.controller.js";
 
@@ -19,6 +20,11 @@ router.post(
   "/register",
   validateRegister,
   register
+);
+
+router.post(
+  "/login",
+  login
 );
 
 router.get(

@@ -57,7 +57,7 @@ app.use(
 );
 
 app.use(
-  (err, req, res, next) => {
+  (err, req, res) => {
     console.error(
       "Error interno del servidor:",
       err
