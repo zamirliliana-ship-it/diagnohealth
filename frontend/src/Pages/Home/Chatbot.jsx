@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Activity, ArrowLeft, User } from "lucide-react";
 import { supabase } from "../../config/supabase";
 
 const API_URL =
@@ -12,7 +13,7 @@ function Chatbot() {
     {
       id: 1,
       sender: "ai",
-      text: "Hola, soy YAIRA IA. Estoy aquí para escucharte y acompañarte. ¿Cómo te sientes hoy?",
+      text: "Hola, soy DIAGNOHEALTH IA. Estoy aquí para escucharte y acompañarte. ¿Cómo te sientes hoy?",
       time: new Date().toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
@@ -299,7 +300,7 @@ function Chatbot() {
 
         throw new Error(
           data?.message ||
-            "No fue posible obtener una respuesta de YAIRA."
+            "No fue posible obtener una respuesta de DIAGNOHEALTH."
         );
       }
 
@@ -325,13 +326,13 @@ function Chatbot() {
       ]);
     } catch (err) {
       console.error(
-        "Error comunicando con YAIRA:",
+        "Error comunicando con DIAGNOHEALTH:",
         err
       );
 
       const errorMessage =
         err?.message ||
-        "No pude conectarme con YAIRA en este momento.";
+        "No pude conectarme con DIAGNOHEALTH en este momento.";
 
       setError(errorMessage);
 
@@ -452,18 +453,53 @@ function Chatbot() {
   // ============================================================
 
   return (
-    <div className="flex min-h-screen bg-[#FAF7F2] text-gray-800">
+    <div className="relative flex min-h-screen overflow-hidden bg-[#FAF7F2] text-gray-800">
+
+      {/* ======================================================
+          ANIMACIONES Y TEXTURA DE FONDO
+          (mismos colores de marca, solo cambia la opacidad)
+      ======================================================= */}
+
+      <style>{`
+        @keyframes dh-fade-in-up {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes dh-breathe {
+          0%, 100% { transform: scale(1); opacity: 0.55; }
+          50% { transform: scale(1.35); opacity: 0; }
+        }
+        .dh-msg-in {
+          animation: dh-fade-in-up 0.35s ease-out both;
+        }
+        .dh-breathe-ring {
+          animation: dh-breathe 2.6s ease-in-out infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .dh-msg-in { animation: none; }
+          .dh-breathe-ring { animation: none; }
+        }
+      `}</style>
+
+      <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-[#0369A1] opacity-[0.06] blur-[100px]" />
+      <div className="pointer-events-none absolute top-1/3 -right-32 h-[28rem] w-[28rem] rounded-full bg-[#0C4A6E] opacity-[0.05] blur-[120px]" />
 
       {/* ======================================================
           SIDEBAR
       ======================================================= */}
 
-      <aside className="hidden w-72 flex-col border-r border-gray-200 bg-white md:flex">
+      <aside className="relative z-10 hidden w-72 flex-col border-r border-gray-200 bg-white/90 backdrop-blur-sm md:flex">
 
         <div className="border-b border-gray-200 p-5">
-          <h1 className="text-xl font-bold text-[#0369A1]">
-            DiagnoHealth
-          </h1>
+          <div className="flex items-center gap-2.5">
+            <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-[#0369A1] text-white">
+              <Activity size={18} />
+            </div>
+
+            <h1 className="text-xl font-bold text-[#0369A1]">
+              DiagnoHealth
+            </h1>
+          </div>
 
           <p className="mt-1 text-sm text-gray-500">
             Bienestar emocional
@@ -476,7 +512,7 @@ function Chatbot() {
             type="button"
             onClick={handleNewConversation}
             disabled={loading}
-            className="mb-4 w-full rounded-xl bg-[#0369A1] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#075985] disabled:cursor-not-allowed disabled:opacity-50"
+            className="mb-4 w-full rounded-xl bg-[#0369A1] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#075985] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
           >
             + Nueva conversación
           </button>
@@ -511,28 +547,46 @@ function Chatbot() {
           CHAT
       ======================================================= */}
 
-      <main className="flex min-h-screen flex-1 flex-col">
+      <main className="relative z-10 flex min-h-screen flex-1 flex-col">
 
         {/* HEADER */}
 
-        <header className="border-b border-gray-200 bg-white px-4 py-4 md:px-8">
+        <header className="border-b border-gray-200 bg-white/90 px-4 py-4 backdrop-blur-sm md:px-8">
 
           <div className="mx-auto flex max-w-5xl items-center justify-between">
 
-            <div>
-              <h2 className="text-lg font-bold text-gray-900">
-                YAIRA IA
-              </h2>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => navigate("/inicioS")}
+                aria-label="Volver al panel"
+                className="flex h-9 w-9 items-center justify-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-[#0369A1]"
+              >
+                <ArrowLeft size={20} />
+              </button>
 
-              <p className="text-sm text-gray-500">
-                Tu asistente de bienestar emocional
-              </p>
+              <div className="relative flex h-10 w-10 items-center justify-center">
+                <span className="dh-breathe-ring absolute inset-0 rounded-full bg-[#0369A1]" />
+                <span className="relative flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#0369A1] to-[#0C4A6E] text-white shadow-sm">
+                  <Activity size={18} />
+                </span>
+              </div>
+
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">
+                  DIAGNOHEALTH IA
+                </h2>
+
+                <p className="text-sm text-gray-500">
+                  Tu asistente de bienestar emocional
+                </p>
+              </div>
             </div>
 
             <button
               type="button"
               onClick={handleCrisis}
-              className="rounded-xl bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
+              className="rounded-xl bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100"
             >
               🚨 Crisis
             </button>
@@ -550,17 +604,23 @@ function Chatbot() {
             {messages.map((item) => (
               <div
                 key={item.id}
-                className={`flex ${
+                className={`dh-msg-in flex items-end gap-2.5 ${
                   item.sender === "user"
                     ? "justify-end"
                     : "justify-start"
                 }`}
               >
 
+                {item.sender === "ai" && (
+                  <span className="mb-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#0369A1] to-[#0C4A6E] text-white shadow-sm">
+                    <Activity size={14} />
+                  </span>
+                )}
+
                 <div
                   className={`max-w-[85%] rounded-2xl px-4 py-3 shadow-sm ${
                     item.sender === "user"
-                      ? "rounded-br-md bg-[#0369A1] text-white"
+                      ? "rounded-br-md bg-gradient-to-br from-[#0369A1] to-[#0C4A6E] text-white"
                       : "rounded-bl-md border border-gray-200 bg-white text-gray-800"
                   }`}
                 >
@@ -581,36 +641,49 @@ function Chatbot() {
 
                 </div>
 
+                {item.sender === "user" && (
+                  <span className="mb-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-200 text-gray-600">
+                    <User size={14} />
+                  </span>
+                )}
+
               </div>
             ))}
 
             {/* PENSANDO */}
 
             {loading && (
-              <div className="flex justify-start">
+              <div className="dh-msg-in flex items-end gap-2.5 justify-start">
+
+                <span className="relative mb-1 flex h-8 w-8 shrink-0 items-center justify-center">
+                  <span className="dh-breathe-ring absolute inset-0 rounded-full bg-[#0369A1]" />
+                  <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#0369A1] to-[#0C4A6E] text-white">
+                    <Activity size={14} />
+                  </span>
+                </span>
 
                 <div className="rounded-2xl rounded-bl-md border border-gray-200 bg-white px-4 py-3 shadow-sm">
 
                   <div className="flex items-center gap-2">
 
-                    <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" />
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-[#0369A1]/60" />
 
                     <span
-                      className="h-2 w-2 animate-bounce rounded-full bg-gray-400"
+                      className="h-2 w-2 animate-bounce rounded-full bg-[#0369A1]/60"
                       style={{
                         animationDelay: "0.15s",
                       }}
                     />
 
                     <span
-                      className="h-2 w-2 animate-bounce rounded-full bg-gray-400"
+                      className="h-2 w-2 animate-bounce rounded-full bg-[#0369A1]/60"
                       style={{
                         animationDelay: "0.3s",
                       }}
                     />
 
                     <span className="ml-1 text-xs text-gray-400">
-                      YAIRA está pensando...
+                      DIAGNOHEALTH está pensando...
                     </span>
 
                   </div>
@@ -640,11 +713,11 @@ function Chatbot() {
 
         {/* INPUT */}
 
-        <footer className="border-t border-gray-200 bg-white px-4 py-4 md:px-8">
+        <footer className="border-t border-gray-200 bg-white/90 px-4 py-4 backdrop-blur-sm md:px-8">
 
           <div className="mx-auto max-w-4xl">
 
-            <div className="flex items-end gap-3 rounded-2xl border border-gray-300 bg-gray-50 p-2 focus-within:border-[#0369A1] focus-within:ring-2 focus-within:ring-[#0369A1]/10">
+            <div className="flex items-end gap-3 rounded-2xl border border-gray-300 bg-gray-50 p-2 transition focus-within:border-[#0369A1] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#0369A1]/10">
 
               <textarea
                 ref={textareaRef}
@@ -665,7 +738,7 @@ function Chatbot() {
                   loading ||
                   !message.trim()
                 }
-                className="rounded-xl bg-[#0369A1] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#075985] disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-xl bg-gradient-to-br from-[#0369A1] to-[#0C4A6E] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
               >
                 {loading
                   ? "..."
@@ -687,7 +760,7 @@ function Chatbot() {
             </div>
 
             <p className="mt-2 text-center text-[11px] text-gray-400">
-              YAIRA IA brinda acompañamiento emocional y no sustituye atención profesional.
+              DIAGNOHEALTH IA brinda acompañamiento emocional y no sustituye atención profesional.
             </p>
 
           </div>

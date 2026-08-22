@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Brain, ArrowLeft, ChevronDown } from 'lucide-react';
+import { supabase } from '../../config/supabase';
 
 function Registro() {
   const navigate = useNavigate();
@@ -16,8 +17,7 @@ function Registro() {
     password: '',
   });
 
-  const [successMessage, setSuccessMessage] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMensaje, setErrorMensaje] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
@@ -25,55 +25,34 @@ function Registro() {
     setFormData((prev) => ({ ...prev, [id]: value }));
   };
 
-const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    setSuccessMessage('');
-    setErrorMessage('');
+    setErrorMensaje('');
     setLoading(true);
 
-    try {
-      const response = await fetch('http://localhost:3000/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+    const { data, error } = await supabase.auth.signUp({
+      email: formData.email,
+      password: formData.password,
+      options: {
+        data: {
           tipo_documento: formData.docType,
           numero_documento: formData.docNumber,
           nombres: formData.firstNames,
           apellidos: formData.lastNames,
-          correo: formData.email,
           telefono: formData.phone,
           genero: formData.gender,
-          password: formData.password,
-        }),
-      });
+        },
+      },
+    });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message ||
-          data.error ||
-          'No fue posible registrar el usuario.'
-        );
-      }
-
-      setSuccessMessage(
-        '¡Cuenta creada correctamente! Ya puedes iniciar sesión.'
-      );
-
-      setTimeout(() => {
-        navigate('/inicioS');
-      }, 2000);
-    } catch (error) {
-      console.error('Error en registro:', error);
-      setErrorMessage(
-        error.message || 'Ocurrió un error al crear la cuenta.'
-      );
-    } finally {
+    if (error) {
+      setErrorMensaje(error.message);
       setLoading(false);
+      return;
+    }
+
+    if (data.user) {
+      navigate('/inicioS');
     }
   };
 
@@ -123,21 +102,9 @@ const handleSubmit = async (e) => {
 
             {/* Registration Card */}
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 md:p-10">
-              {successMessage && (
-                <div
-                  role="status"
-                  className="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700"
-                >
-                  {successMessage}
-                </div>
-              )}
-
-              {errorMessage && (
-                <div
-                  role="alert"
-                  className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-                >
-                  {errorMessage}
+              {errorMensaje && (
+                <div role="alert" className="mb-6 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                  {errorMensaje}
                 </div>
               )}
 
@@ -260,7 +227,7 @@ const handleSubmit = async (e) => {
                 </div>
 
                 <button
-                  className="w-full py-4 bg-[#0369A1] text-white text-sm font-medium rounded-lg hover:bg-[#0C4A6E] transition-all transform active:scale-[0.98] shadow-md mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-4 bg-[#0369A1] text-white text-sm font-medium rounded-lg hover:bg-[#0C4A6E] transition-all transform active:scale-[0.98] shadow-md mt-4 disabled:opacity-70 disabled:cursor-not-allowed"
                   type="submit"
                   disabled={loading}
                 >
