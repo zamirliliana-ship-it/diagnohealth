@@ -1,19 +1,27 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import {
-  LayoutDashboard,
-  MessageSquare,
-  History,
-  User,
+  Home,
+  TrendingUp,
+  ClipboardList,
+  Bot,
   LogOut,
   Menu,
   X,
   Smile,
   Dumbbell,
+  History,
 } from "lucide-react";
 
 import { supabase } from "../../config/supabase";
+
+const navItems = [
+  { label: "Panel Principal", to: "/inicioS", icon: Home },
+  { label: "Mi Progreso", to: "/mi-progreso", icon: TrendingUp },
+  { label: "Test de Bienestar", to: "/test-bienestar", icon: ClipboardList },
+  { label: "Asistente IA", to: "/chatbot", icon: Bot },
+];
 
 function CerrarSesion() {
   const navigate = useNavigate();
@@ -21,6 +29,27 @@ function CerrarSesion() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [userEmail, setUserEmail] = useState("");
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadEmail = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (mounted && session?.user?.email) {
+        setUserEmail(session.user.email);
+      }
+    };
+
+    loadEmail();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleCancel = () => {
     navigate("/chatbot");
@@ -50,93 +79,85 @@ function CerrarSesion() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF7F2] text-[#1B1C1A]">
+    <div className="relative min-h-screen overflow-x-hidden bg-[#FAF7F2] text-[#1B1C1A]">
 
-      {/* MENÚ MÓVIL */}
+      {/* BOTÓN DE MENÚ MÓVIL */}
       <button
         type="button"
         onClick={() => setMenuOpen((value) => !value)}
-        className="fixed left-4 top-4 z-[60] rounded-lg bg-[#0C4A6E] p-2 text-white shadow-md md:hidden"
-        aria-label="Abrir menú"
+        className="fixed left-4 top-4 z-[60] flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-600 shadow-md transition hover:text-[#0369A1] md:hidden"
+        aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+        aria-expanded={menuOpen}
       >
-        {menuOpen ? <X size={24} /> : <Menu size={24} />}
+        {menuOpen ? <X size={22} /> : <Menu size={22} />}
       </button>
 
-      {/* SIDEBAR */}
-      <aside
-        className={`
-          fixed left-0 top-0 z-50 flex h-screen w-64
-          flex-col bg-[#0C4A6E] text-white shadow-xl
-          transition-transform duration-300
-          md:translate-x-0
-          ${menuOpen ? "translate-x-0" : "-translate-x-full"}
-        `}
-      >
-        <div className="flex h-20 items-center border-b border-white/10 px-5">
-          <Link to="/" className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white font-bold text-[#0C4A6E]">
-              D
-            </div>
-            <span className="text-lg font-bold">DIAGNOHEALTH</span>
-          </Link>
-        </div>
-
-        <nav className="flex-1 space-y-2 px-3 py-7">
-          <Link to="/" className="flex items-center gap-4 rounded-lg px-4 py-3 text-sm text-white/80 hover:bg-white/10">
-            <LayoutDashboard size={20} /> Dashboard
-          </Link>
-
-          <Link to="/chatbot" className="flex items-center gap-4 rounded-lg px-4 py-3 text-sm text-white/80 hover:bg-white/10">
-            <MessageSquare size={20} /> Chat con IA
-          </Link>
-
-          <button type="button" className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left text-sm text-white/80 hover:bg-white/10">
-            <History size={20} /> Mis Caminos
-          </button>
-
-          <Link to="/inicioS" className="flex items-center gap-4 rounded-lg px-4 py-3 text-sm text-white/80 hover:bg-white/10">
-            <User size={20} /> Perfil
-          </Link>
-        </nav>
-
-        <div className="px-4 pb-6">
-          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-            <p className="mb-3 text-sm font-medium">Nivel de Bienestar</p>
-            <div className="h-2 overflow-hidden rounded-full bg-white/10">
-              <div className="h-full rounded-full bg-[#7BC2FF]" style={{ width: "65%" }} />
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* OVERLAY */}
+      {/* OVERLAY (móvil) */}
       {menuOpen && (
-        <button
-          type="button"
+        <div
           onClick={() => setMenuOpen(false)}
           className="fixed inset-0 z-40 bg-black/40 md:hidden"
-          aria-label="Cerrar menú"
         />
       )}
 
+      {/* SIDEBAR */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex h-screen w-72 max-w-[85%] flex-col border-r border-gray-200 bg-white shadow-xl transition-transform duration-300 ease-out md:translate-x-0 md:shadow-none ${
+          menuOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="border-b border-gray-200 p-5">
+          <h1 className="text-2xl font-extrabold tracking-tight text-[#00334F]">
+            DIAGNOHEALTH
+          </h1>
+        </div>
+
+        <nav className="flex-1 space-y-1.5 p-4">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-gray-600 transition hover:bg-gray-100 hover:text-[#0369A1]"
+              >
+                <Icon size={20} />
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {userEmail && (
+          <div className="border-t border-gray-200 px-5 py-4">
+            <p className="truncate text-xs text-gray-500 sm:text-sm">
+              {userEmail}
+            </p>
+          </div>
+        )}
+      </aside>
+
       {/* CONTENIDO */}
-      <main className="ml-0 min-h-screen md:ml-64">
-        <header className="border-b border-gray-200 bg-white px-4 py-5 sm:px-6">
+      <main className="min-h-screen md:pl-72">
+        <header className="border-b border-gray-200 bg-white px-4 py-4 sm:px-6 sm:py-5">
           <div className="pl-12 md:pl-0">
-            <h1 className="text-2xl font-bold text-[#00334F]">Cerrar sesión</h1>
-            <p className="mt-1 text-gray-500">Administra tu sesión de DiagnoHealth.</p>
+            <h1 className="text-xl font-bold text-[#00334F] sm:text-2xl">Cerrar sesión</h1>
+            <p className="mt-1 text-sm text-gray-500 sm:text-base">Administra tu sesión de DiagnoHealth.</p>
           </div>
         </header>
 
-        <section className="px-4 py-10 sm:px-6">
+        <section className="px-4 py-8 sm:px-6 sm:py-10">
           <div className="mx-auto max-w-2xl">
-            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
-              <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-600">
-                <LogOut size={30} />
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
+              <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-600 sm:h-16 sm:w-16">
+                <LogOut size={26} className="sm:hidden" />
+                <LogOut size={30} className="hidden sm:block" />
               </div>
 
-              <h2 className="text-center text-2xl font-bold text-[#00334F]">¿Quieres cerrar sesión?</h2>
-              <p className="mx-auto mt-3 max-w-md text-center text-gray-500">Tu sesión actual se cerrará de forma segura.</p>
+              <h2 className="text-center text-xl font-bold text-[#00334F] sm:text-2xl">¿Quieres cerrar sesión?</h2>
+              <p className="mx-auto mt-3 max-w-md text-center text-sm text-gray-500 sm:text-base">Tu sesión actual se cerrará de forma segura.</p>
 
               {errorMessage && (
                 <div role="alert" className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -149,7 +170,7 @@ function CerrarSesion() {
                   type="button"
                   onClick={handleCancel}
                   disabled={loading}
-                  className="rounded-lg border border-gray-300 px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  className="rounded-lg border border-gray-300 px-6 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
                 >
                   Cancelar
                 </button>
@@ -158,7 +179,7 @@ function CerrarSesion() {
                   type="button"
                   onClick={handleLogout}
                   disabled={loading}
-                  className="flex items-center justify-center gap-2 rounded-lg bg-red-600 px-6 py-3 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex items-center justify-center gap-2 rounded-lg bg-red-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <LogOut size={18} />
                   {loading ? "Cerrando sesión..." : "Cerrar sesión"}

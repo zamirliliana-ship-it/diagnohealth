@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Activity, ArrowLeft, User } from "lucide-react";
+import { Activity, ArrowLeft, Menu, User, X } from "lucide-react";
 import { supabase } from "../../config/supabase";
 
 const API_URL =
@@ -25,6 +25,7 @@ function Chatbot() {
   const [loading, setLoading] = useState(false);
   const [session, setSession] = useState(null);
   const [error, setError] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const textareaRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -453,7 +454,7 @@ function Chatbot() {
   // ============================================================
 
   return (
-    <div className="relative flex min-h-screen overflow-hidden bg-[#FAF7F2] text-gray-800">
+    <div className="relative flex min-h-screen overflow-x-hidden bg-[#FAF7F2] text-gray-800">
 
       {/* ======================================================
           ANIMACIONES Y TEXTURA DE FONDO
@@ -486,31 +487,73 @@ function Chatbot() {
 
       {/* ======================================================
           SIDEBAR
+          - Desktop: fija en el layout (md:flex, md:static)
+          - Móvil: drawer superpuesto que abre/cierra con el
+            botón de menú del header
       ======================================================= */}
 
-      <aside className="relative z-10 hidden w-72 flex-col border-r border-gray-200 bg-white/90 backdrop-blur-sm md:flex">
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 z-30 bg-black/40 md:hidden"
+        />
+      )}
 
-        <div className="border-b border-gray-200 p-5">
-          <div className="flex items-center gap-2.5">
-            <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-[#0369A1] text-white">
-              <Activity size={18} />
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 flex w-72 max-w-[85%] flex-col border-r border-gray-200 bg-white shadow-xl transition-transform duration-300 ease-out md:relative md:z-10 md:w-72 md:max-w-none md:translate-x-0 md:bg-white/90 md:shadow-none md:backdrop-blur-sm ${
+          sidebarOpen
+            ? "translate-x-0"
+            : "-translate-x-full"
+        }`}
+      >
+
+        <div className="flex items-center justify-between border-b border-gray-200 p-5">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-[#0369A1] text-white">
+                <Activity size={18} />
+              </div>
+
+              <h1 className="text-xl font-bold text-[#0369A1]">
+                DiagnoHealth
+              </h1>
             </div>
 
-            <h1 className="text-xl font-bold text-[#0369A1]">
-              DiagnoHealth
-            </h1>
+            <p className="mt-1 text-sm text-gray-500">
+              Bienestar emocional
+            </p>
           </div>
 
-          <p className="mt-1 text-sm text-gray-500">
-            Bienestar emocional
-          </p>
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Cerrar menú"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-500 transition hover:bg-gray-100 md:hidden"
+          >
+            <X size={20} />
+          </button>
         </div>
 
         <div className="flex-1 p-4">
 
           <button
             type="button"
-            onClick={handleNewConversation}
+            onClick={() => {
+              setSidebarOpen(false);
+              navigate("/inicioS");
+            }}
+            className="mb-4 flex w-full items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-gray-600 transition hover:bg-gray-100 md:hidden"
+          >
+            <ArrowLeft size={16} />
+            Volver al panel
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              handleNewConversation();
+              setSidebarOpen(false);
+            }}
             disabled={loading}
             className="mb-4 w-full rounded-xl bg-[#0369A1] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#075985] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
           >
@@ -519,9 +562,10 @@ function Chatbot() {
 
           <button
             type="button"
-            onClick={() =>
-              navigate("/crisis-alert")
-            }
+            onClick={() => {
+              setSidebarOpen(false);
+              navigate("/crisis-alert");
+            }}
             className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100"
           >
             🚨 Necesito ayuda
@@ -551,33 +595,42 @@ function Chatbot() {
 
         {/* HEADER */}
 
-        <header className="border-b border-gray-200 bg-white/90 px-4 py-4 backdrop-blur-sm md:px-8">
+        <header className="border-b border-gray-200 bg-white/90 px-3 py-3 backdrop-blur-sm sm:px-4 sm:py-4 md:px-8">
 
-          <div className="mx-auto flex max-w-5xl items-center justify-between">
+          <div className="mx-auto flex max-w-5xl items-center justify-between gap-2">
 
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 items-center gap-1.5 sm:gap-3">
+              <button
+                type="button"
+                onClick={() => setSidebarOpen(true)}
+                aria-label="Abrir menú"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-[#0369A1] md:hidden"
+              >
+                <Menu size={20} />
+              </button>
+
               <button
                 type="button"
                 onClick={() => navigate("/inicioS")}
                 aria-label="Volver al panel"
-                className="flex h-9 w-9 items-center justify-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-[#0369A1]"
+                className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-[#0369A1] md:flex"
               >
                 <ArrowLeft size={20} />
               </button>
 
-              <div className="relative flex h-10 w-10 items-center justify-center">
+              <div className="relative flex h-9 w-9 shrink-0 items-center justify-center sm:h-10 sm:w-10">
                 <span className="dh-breathe-ring absolute inset-0 rounded-full bg-[#0369A1]" />
-                <span className="relative flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#0369A1] to-[#0C4A6E] text-white shadow-sm">
+                <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#0369A1] to-[#0C4A6E] text-white shadow-sm sm:h-10 sm:w-10">
                   <Activity size={18} />
                 </span>
               </div>
 
-              <div>
-                <h2 className="text-lg font-bold text-gray-900">
+              <div className="min-w-0">
+                <h2 className="truncate text-base font-bold text-gray-900 sm:text-lg">
                   DIAGNOHEALTH IA
                 </h2>
 
-                <p className="text-sm text-gray-500">
+                <p className="hidden truncate text-sm text-gray-500 sm:block">
                   Tu asistente de bienestar emocional
                 </p>
               </div>
@@ -586,9 +639,9 @@ function Chatbot() {
             <button
               type="button"
               onClick={handleCrisis}
-              className="rounded-xl bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100"
+              className="shrink-0 rounded-xl bg-red-50 px-2.5 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-100 sm:px-3 sm:text-sm"
             >
-              🚨 Crisis
+              🚨 <span className="hidden sm:inline">Crisis</span>
             </button>
 
           </div>
@@ -597,14 +650,14 @@ function Chatbot() {
 
         {/* MENSAJES */}
 
-        <section className="flex-1 overflow-y-auto px-4 py-6 md:px-8">
+        <section className="flex-1 overflow-y-auto px-3 py-5 sm:px-4 sm:py-6 md:px-8">
 
-          <div className="mx-auto max-w-4xl space-y-5">
+          <div className="mx-auto max-w-4xl space-y-4 sm:space-y-5">
 
             {messages.map((item) => (
               <div
                 key={item.id}
-                className={`dh-msg-in flex items-end gap-2.5 ${
+                className={`dh-msg-in flex items-end gap-2 sm:gap-2.5 ${
                   item.sender === "user"
                     ? "justify-end"
                     : "justify-start"
@@ -618,7 +671,7 @@ function Chatbot() {
                 )}
 
                 <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-3 shadow-sm ${
+                  className={`max-w-[88%] rounded-2xl px-3.5 py-2.5 shadow-sm sm:max-w-[85%] sm:px-4 sm:py-3 ${
                     item.sender === "user"
                       ? "rounded-br-md bg-gradient-to-br from-[#0369A1] to-[#0C4A6E] text-white"
                       : "rounded-bl-md border border-gray-200 bg-white text-gray-800"
@@ -713,7 +766,7 @@ function Chatbot() {
 
         {/* INPUT */}
 
-        <footer className="border-t border-gray-200 bg-white/90 px-4 py-4 backdrop-blur-sm md:px-8">
+        <footer className="border-t border-gray-200 bg-white/90 px-3 py-3 backdrop-blur-sm sm:px-4 sm:py-4 md:px-8">
 
           <div className="mx-auto max-w-4xl">
 
@@ -747,13 +800,17 @@ function Chatbot() {
 
             </div>
 
-            <div className="mt-2 flex items-center justify-between">
+            <div className="mt-2 flex items-center justify-between gap-2">
 
-              <p className="text-[11px] text-gray-400">
+              <p className="hidden text-[11px] text-gray-400 sm:block">
                 Enter para enviar · Shift + Enter para nueva línea
               </p>
 
-              <p className="text-[11px] text-gray-400">
+              <p className="text-[11px] text-gray-400 sm:hidden">
+                Enter para enviar
+              </p>
+
+              <p className="shrink-0 text-[11px] text-gray-400">
                 {message.length}/2000
               </p>
 
