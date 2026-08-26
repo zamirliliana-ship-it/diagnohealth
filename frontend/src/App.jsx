@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -20,6 +20,9 @@ import CerrarSesion from "./Pages/Home/CerrarSesion";
 import RecuperarPassword from "./Pages/Home/RecuperarPassword";
 import RestablecerPassword from "./Pages/Home/RestablecerPassword";
 import TestBienestar from "./Pages/Home/TestBienestar";
+
+// Importa tu portal unificado de administración y el panel principal
+import AuthPortal from "./Pages/Admin/sesion";
 import DiagnoHealthApp from "./Pages/Admin/Admis";
 
 function ProtectedRoute({ children }) {
@@ -82,7 +85,7 @@ function ProtectedRoute({ children }) {
   if (!session) {
     return (
       <Navigate
-        to="/login"
+        to="/sesion"
         replace
         state={{
           from: location.pathname,
@@ -105,8 +108,16 @@ function AppContent() {
       <Route path="/restablecer-password" element={<RestablecerPassword />} />
       <Route path="/crisisAlert" element={<CrisisAlert />} />
       <Route path="/crisis-alert" element={<CrisisAlert />} />
-      <Route path="/admin/admis" element={<DiagnoHealthApp />} />
-
+      <Route path="/admin/login" element={<AuthPortal />} />
+      <Route path="/admin/registro" element={<AuthPortal />} />{" "}
+      <Route
+        path="/admin/admis"
+        element={
+          <ProtectedRoute>
+            <DiagnoHealthApp />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/inicioS"
         element={
@@ -115,7 +126,6 @@ function AppContent() {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/mi-progreso"
         element={
@@ -124,7 +134,6 @@ function AppContent() {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/chatbot"
         element={
@@ -133,7 +142,6 @@ function AppContent() {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/cerrar-sesion"
         element={
@@ -142,7 +150,6 @@ function AppContent() {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/CerrarSesion"
         element={
@@ -151,7 +158,6 @@ function AppContent() {
           </ProtectedRoute>
         }
       />
-
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
