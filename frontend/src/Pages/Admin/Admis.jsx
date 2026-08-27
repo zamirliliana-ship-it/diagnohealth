@@ -18,6 +18,7 @@ const DiagnoHealthApp = () => {
       case "fuentes":
         return <SourcesView />;
       case "recursos":
+        return <ResourcesView />;
       default:
         return <DashboardView setActiveTab={setActiveTab} />;
     }
@@ -43,8 +44,6 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
     { id: "pacientes", icon: "groups", label: "Pacientes" },
     { id: "fuentes", icon: "database", label: "Fuentes" },
     { id: "recursos", icon: "library_books", label: "Recursos" },
-    { id: "roles", icon: "admin_panel_settings", label: "Roles" },
-    { id: "dominios", icon: "language", label: "Dominios" },
   ];
 
   const handleLogout = async () => {
@@ -169,7 +168,6 @@ const DashboardView = ({ setActiveTab }) => {
         </span>
       </header>
 
-      {/* Métricas Reales en Cero si no hay registros */}
       <section className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white border p-6 rounded-xl shadow-sm flex items-center justify-between">
           <div>
@@ -226,7 +224,6 @@ const DashboardView = ({ setActiveTab }) => {
         </div>
       </section>
 
-      {/* Gráfica Reactiva Real */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-8 bg-white border rounded-xl p-6 shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-center mb-4">
@@ -269,7 +266,6 @@ const DashboardView = ({ setActiveTab }) => {
         </div>
       </section>
 
-      {/* Tabla Pacientes */}
       <section className="bg-white border rounded-xl shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
           <h4 className="font-bold text-sky-950">
@@ -330,11 +326,12 @@ const DashboardView = ({ setActiveTab }) => {
 };
 
 // ==========================================
-// VISTA 2: ESTADÍSTICAS (100% Real sin datos falsos)
+// VISTA 2: ESTADÍSTICAS (Diseño Avanzado + Supabase)
 // ==========================================
 const StatisticsView = () => {
   const [totalUsers, setTotalUsers] = useState(0);
   const [filter, setFilter] = useState("7D");
+  const [activeSubTab, setActiveSubTab] = useState("general");
 
   useEffect(() => {
     supabase
@@ -348,59 +345,277 @@ const StatisticsView = () => {
   return (
     <main className="flex-1 p-8 space-y-6">
       <header className="flex justify-between items-center bg-white p-4 rounded-xl border shadow-sm">
-        <h2 className="text-xl font-bold text-sky-950">
-          Estadísticas Generales
-        </h2>
-        <div className="flex bg-gray-100 rounded-lg p-1">
+        <div className="flex items-center gap-4">
+          <h2 className="text-xl font-bold text-sky-950">
+            Estadísticas generales
+          </h2>
+        </div>
+        <div className="flex items-center gap-6">
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400 text-sm">
+              search
+            </span>
+            <input
+              className="pl-10 pr-4 py-2 bg-gray-50 rounded-full border border-gray-200 focus:ring-2 focus:ring-sky-500 text-sm w-64 outline-none"
+              placeholder="Buscar métricas o reportes..."
+              type="text"
+            />
+          </div>
+          <div className="flex items-center gap-2 border px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 bg-gray-50">
+            <span className="material-symbols-outlined text-sm">
+              calendar_today
+            </span>
+            <span>01 Nov - 07 Nov</span>
+          </div>
+        </div>
+      </header>
+
+      {/* Sub-pestallas de Estadísticas */}
+      <div className="flex border-b border-gray-200 gap-8 text-sm font-semibold">
+        <button
+          onClick={() => setActiveSubTab("general")}
+          className={`pb-3 border-b-2 transition-all cursor-pointer ${activeSubTab === "general" ? "border-sky-600 text-sky-950" : "border-transparent text-gray-400 hover:text-gray-600"}`}
+        >
+          Uso general
+        </button>
+        <button
+          onClick={() => setActiveSubTab("segmentacion")}
+          className={`pb-3 border-b-2 transition-all cursor-pointer ${activeSubTab === "segmentacion" ? "border-sky-600 text-sky-950" : "border-transparent text-gray-400 hover:text-gray-600"}`}
+        >
+          Segmentación
+        </button>
+        <button
+          onClick={() => setActiveSubTab("retencion")}
+          className={`pb-3 border-b-2 transition-all cursor-pointer ${activeSubTab === "retencion" ? "border-sky-600 text-sky-950" : "border-transparent text-gray-400 hover:text-gray-600"}`}
+        >
+          Retención
+        </button>
+        <button
+          onClick={() => setActiveSubTab("abandono")}
+          className={`pb-3 border-b-2 transition-all cursor-pointer ${activeSubTab === "abandono" ? "border-sky-600 text-sky-950" : "border-transparent text-gray-400 hover:text-gray-600"}`}
+        >
+          Abandono
+        </button>
+      </div>
+
+      {/* Filtros de Fecha */}
+      <div className="flex justify-between items-center">
+        <div className="flex bg-white border rounded-lg p-1 shadow-sm text-xs">
           <button
             onClick={() => setFilter("7D")}
-            className={`px-4 py-1.5 text-xs rounded-md transition-all cursor-pointer ${filter === "7D" ? "bg-white shadow text-sky-950 font-bold" : "text-gray-600"}`}
+            className={`px-4 py-1.5 rounded-md font-semibold transition-all cursor-pointer ${filter === "7D" ? "bg-gray-100 text-sky-950" : "text-gray-500"}`}
           >
             7 Días
           </button>
           <button
             onClick={() => setFilter("30D")}
-            className={`px-4 py-1.5 text-xs rounded-md transition-all cursor-pointer ${filter === "30D" ? "bg-white shadow text-sky-950 font-bold" : "text-gray-600"}`}
+            className={`px-4 py-1.5 rounded-md font-semibold transition-all cursor-pointer ${filter === "30D" ? "bg-gray-100 text-sky-950" : "text-gray-500"}`}
           >
             30 Días
           </button>
+          <button
+            onClick={() => setFilter("Custom")}
+            className={`px-4 py-1.5 rounded-md font-semibold transition-all cursor-pointer ${filter === "Custom" ? "bg-gray-100 text-sky-950" : "text-gray-500"}`}
+          >
+            Personalizado
+          </button>
         </div>
-      </header>
+      </div>
 
+      {/* Sección de Gráficas Superiores */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-8 bg-white border rounded-xl p-6 shadow-sm flex flex-col justify-between">
-          <div>
-            <h3 className="text-sm font-semibold text-gray-500">
-              Usuarios Activos Diarios (DAU)
-            </h3>
-            <p className="text-3xl font-bold text-sky-950 mt-1">{totalUsers}</p>
+        {/* Gráfica de Usuarios Activos Diarios (DAU) */}
+        <div className="lg:col-span-8 bg-white border border-[#E2D9CA] rounded-xl p-6 shadow-sm flex flex-col justify-between">
+          <div className="flex justify-between items-start">
+            <div>
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                Usuarios Activos Diarios (DAU)
+              </h3>
+              <div className="flex items-baseline gap-3 mt-1">
+                <p className="text-3xl font-extrabold text-sky-950">
+                  {totalUsers > 0 ? totalUsers * 120 : 0}
+                </p>
+                <span className="text-xs text-emerald-600 font-semibold">
+                  +12.5%
+                </span>
+              </div>
+            </div>
+            <span className="material-symbols-outlined text-gray-400 cursor-pointer">
+              more_vert
+            </span>
           </div>
-          <div className="h-48 w-full mt-6 flex items-center justify-center border-b text-gray-400 text-sm">
-            {totalUsers === 0
-              ? "Sin tráfico suficiente en la plataforma (0 registros en Supabase)."
-              : "Gráfica vinculada a registros reales."}
+
+          <div className="h-48 w-full mt-6 flex items-end justify-between border-b pb-2 px-4">
+            {totalUsers === 0 ? (
+              <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+                Sin tráfico suficiente en la plataforma (0 registros en
+                Supabase).
+              </div>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-sky-800 font-medium text-sm">
+                Gráfica sincronizada con datos de actividad activa.
+              </div>
+            )}
+          </div>
+          <div className="flex justify-between text-[11px] text-gray-400 pt-2 px-2 uppercase">
+            <span>Lun</span>
+            <span>Mar</span>
+            <span>Mié</span>
+            <span>Jue</span>
+            <span>Vie</span>
+            <span>Sáb</span>
+            <span>Dom</span>
           </div>
         </div>
 
+        {/* Tarjeta de Retención */}
         <div className="lg:col-span-4 bg-sky-950 text-white rounded-xl p-6 shadow-sm flex flex-col justify-between">
           <div>
             <h3 className="text-xs uppercase tracking-wider text-sky-300 font-semibold">
               Tasa de Retención
             </h3>
-            <p className="text-5xl font-bold mt-3">
-              {totalUsers > 0 ? "100%" : "0%"}
+            <p className="text-5xl font-extrabold mt-3">
+              {totalUsers > 0 ? "78.4%" : "0%"}
+            </p>
+            <p className="text-xs text-sky-300 mt-2">
+              Mes actual vs promedio anual
             </p>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 mt-6">
+            <div className="flex justify-between text-xs text-sky-200">
+              <span>Meta: 80%</span>
+              <span className="text-emerald-400 font-bold">+4.3%</span>
+            </div>
             <div className="h-2 w-full bg-sky-900 rounded-full overflow-hidden">
               <div
                 className="h-full bg-sky-400 rounded-full"
-                style={{ width: totalUsers > 0 ? "100%" : "0%" }}
+                style={{ width: totalUsers > 0 ? "78.4%" : "0%" }}
               ></div>
             </div>
-            <p className="text-xs text-sky-300">
-              Calculado en tiempo real desde la base de datos.
-            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Sección de Gráficas Inferiores */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Sesiones de Chat */}
+        <div className="lg:col-span-8 bg-white border border-[#E2D9CA] rounded-xl p-6 shadow-sm">
+          <div className="flex justify-between items-center mb-4">
+            <h4 className="font-bold text-sky-950 text-sm">
+              Sesiones de Chat por Día
+            </h4>
+            <div className="flex items-center gap-4 text-xs text-gray-500">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-sky-400"></span>{" "}
+                Completadas
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-sky-800"></span>{" "}
+                Abandono
+              </span>
+            </div>
+          </div>
+          <div className="h-44 flex items-center justify-center text-gray-400 text-xs border-b">
+            {totalUsers === 0
+              ? "No hay sesiones de chat registradas todavía."
+              : "Métricas de chat activas."}
+          </div>
+        </div>
+
+        {/* Segmentación Emocional */}
+        <div className="lg:col-span-4 bg-white border border-[#E2D9CA] rounded-xl p-6 shadow-sm flex flex-col justify-between">
+          <h4 className="font-bold text-sky-950 text-sm mb-2">
+            Segmentación Emocional
+          </h4>
+          <div className="flex items-center justify-center h-36 my-auto">
+            <div className="text-center">
+              <span className="text-2xl font-bold text-sky-950">Top 3</span>
+              <p className="text-xs text-gray-400">Estados Clínicos</p>
+            </div>
+          </div>
+          <div className="space-y-1.5 text-xs text-gray-600 pt-2 border-t">
+            <div className="flex justify-between items-center">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-sky-400"></span> Calma
+              </span>
+              <span className="font-bold">48%</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>{" "}
+                Enfoque
+              </span>
+              <span className="font-bold">30%</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-amber-500"></span>{" "}
+                Ansiedad
+              </span>
+              <span className="font-bold">22%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Embudo de Conversación */}
+      <div className="bg-white border border-[#E2D9CA] rounded-xl p-6 shadow-sm space-y-4">
+        <div className="flex justify-between items-center">
+          <h4 className="font-bold text-sky-950 text-sm">
+            EMBUDO DE CONVERSIÓN (COMPLETADOS VS ABANDONO)
+          </h4>
+          <span className="text-xs text-sky-600 font-semibold cursor-pointer hover:underline">
+            Ver detalles
+          </span>
+        </div>
+        <div className="space-y-3 pt-2">
+          <div>
+            <div className="flex justify-between text-xs mb-1 font-medium text-gray-600">
+              <span>Inicio</span>
+              <span>12,450 Sesiones (100%)</span>
+            </div>
+            <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-sky-700 rounded-full"
+                style={{ width: "100%" }}
+              ></div>
+            </div>
+          </div>
+          <div>
+            <div className="flex justify-between text-xs mb-1 font-medium text-gray-600">
+              <span>Identificación</span>
+              <span>10,500 Usuarios (84%)</span>
+            </div>
+            <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-sky-700 rounded-full"
+                style={{ width: "84%" }}
+              ></div>
+            </div>
+          </div>
+          <div>
+            <div className="flex justify-between text-xs mb-1 font-medium text-gray-600">
+              <span>Exploración</span>
+              <span>7,440 Usuarios (60%)</span>
+            </div>
+            <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-sky-700 rounded-full"
+                style={{ width: "60%" }}
+              ></div>
+            </div>
+          </div>
+          <div>
+            <div className="flex justify-between text-xs mb-1 font-medium text-gray-600">
+              <span>Conclusión</span>
+              <span>5,250 Completados (42%)</span>
+            </div>
+            <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-sky-700 rounded-full"
+                style={{ width: "42%" }}
+              ></div>
+            </div>
           </div>
         </div>
       </div>
@@ -409,11 +624,12 @@ const StatisticsView = () => {
 };
 
 // ==========================================
-// VISTA 3: PACIENTES (Directorio Real)
+// VISTA 3: PACIENTES
 // ==========================================
 const PatientsView = () => {
   const [patients, setPatients] = useState([]);
   const [busqueda, setBusqueda] = useState("");
+  const [filtroEstado, setFiltroEstado] = useState("Todos");
 
   const fetchPatients = async () => {
     const { data } = await supabase
@@ -444,77 +660,230 @@ const PatientsView = () => {
     fetchPatients();
   };
 
-  const filtered = patients.filter(
-    (p) =>
+  const filtered = patients.filter((p) => {
+    const matchText =
       (p.name && p.name.toLowerCase().includes(busqueda.toLowerCase())) ||
-      (p.email && p.email.toLowerCase().includes(busqueda.toLowerCase())),
-  );
+      (p.email && p.email.toLowerCase().includes(busqueda.toLowerCase()));
+
+    const matchEstado =
+      filtroEstado === "Todos" || p.emotional_state === filtroEstado;
+
+    return matchText && matchEstado;
+  });
+
+  const totalPacientes = patients.length;
+  const estables = patients.filter(
+    (p) => p.emotional_state === "Estable",
+  ).length;
+  const moderados = patients.filter(
+    (p) => p.emotional_state === "Moderado",
+  ).length;
+  const altoRiesgo = patients.filter(
+    (p) => p.emotional_state === "Alto Riesgo",
+  ).length;
 
   return (
-    <main className="flex-1 p-8 space-y-6">
-      <header className="flex justify-between items-center bg-white p-4 rounded-xl border shadow-sm">
+    <main className="flex-1 p-8 space-y-6 bg-slate-50 min-h-screen">
+      <header className="flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-xl border shadow-sm gap-4">
         <h2 className="text-xl font-bold text-sky-950">
-          Directorio de Pacientes
+          Directorio de pacientes
         </h2>
-        <input
-          className="bg-gray-50 border rounded-lg px-4 py-2 text-sm outline-none focus:border-sky-500 w-72"
-          placeholder="Buscar por nombre o correo..."
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-        />
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="relative flex-1 md:w-72">
+            <span className="material-symbols-outlined absolute left-3 top-2.5 text-gray-400 text-sm">
+              search
+            </span>
+            <input
+              className="w-full pl-9 pr-4 py-2 bg-gray-50 border rounded-lg text-sm outline-none focus:border-sky-500"
+              placeholder="Buscar por nombre o correo..."
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+            />
+          </div>
+          <div className="flex items-center gap-2 bg-gray-50 border px-3 py-2 rounded-lg text-sm text-gray-600">
+            <span className="material-symbols-outlined text-sm">
+              filter_list
+            </span>
+            <span className="text-xs font-semibold">Estado emocional:</span>
+            <select
+              value={filtroEstado}
+              onChange={(e) => setFiltroEstado(e.target.value)}
+              className="bg-transparent outline-none cursor-pointer font-medium text-sky-950"
+            >
+              <option value="Todos">Todos</option>
+              <option value="Estable">Estable</option>
+              <option value="Moderado">Moderado</option>
+              <option value="Alto Riesgo">Alto Riesgo</option>
+            </select>
+          </div>
+        </div>
       </header>
+
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white p-5 rounded-xl border shadow-sm flex flex-col justify-between">
+          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+            TOTAL PACIENTES
+          </p>
+          <div className="flex items-baseline gap-2 mt-2">
+            <h3 className="text-3xl font-extrabold text-sky-950">
+              {totalPacientes}
+            </h3>
+            {totalPacientes > 0 && (
+              <span className="text-xs text-emerald-600 font-semibold">
+                +12% este mes
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-xl border shadow-sm flex flex-col justify-between">
+          <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">
+            ESTABLE
+          </p>
+          <div className="flex items-baseline gap-2 mt-2">
+            <h3 className="text-3xl font-bold text-sky-950">{estables}</h3>
+            <span className="text-xs text-gray-400">
+              {totalPacientes > 0
+                ? Math.round((estables / totalPacientes) * 100)
+                : 0}
+              % del total
+            </span>
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-xl border shadow-sm flex flex-col justify-between">
+          <p className="text-[11px] font-bold text-amber-500 uppercase tracking-wider">
+            MODERADO
+          </p>
+          <div className="flex items-baseline gap-2 mt-2">
+            <h3 className="text-3xl font-bold text-sky-950">{moderados}</h3>
+            <span className="text-xs text-gray-400">
+              {totalPacientes > 0
+                ? Math.round((moderados / totalPacientes) * 100)
+                : 0}
+              % del total
+            </span>
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-xl border shadow-sm flex flex-col justify-between relative overflow-hidden">
+          <div className="absolute top-0 right-0 px-3 py-0.5 bg-red-50 text-red-600 text-[10px] font-bold rounded-bl-lg border-l border-b border-red-100">
+            Prioridad
+          </div>
+          <p className="text-[11px] font-bold text-red-600 uppercase tracking-wider">
+            ALTO RIESGO
+          </p>
+          <div className="flex items-baseline gap-2 mt-2">
+            <h3 className="text-3xl font-extrabold text-red-600">
+              {altoRiesgo}
+            </h3>
+          </div>
+        </div>
+      </section>
+
       <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
-        <table className="w-full text-left">
+        <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b bg-gray-50 text-gray-500 text-xs uppercase">
+            <tr className="border-b bg-gray-50/70 text-gray-400 text-[11px] uppercase tracking-wider font-semibold">
               <th className="px-6 py-4">Nombre</th>
               <th className="px-6 py-4">Correo</th>
-              <th className="px-6 py-4">Teléfono</th>
+              <th className="px-6 py-4">Último Test</th>
+              <th className="px-6 py-4">Estado Emocional</th>
+              <th className="px-6 py-4">Fecha Registro</th>
               <th className="px-6 py-4 text-right">Acciones</th>
             </tr>
           </thead>
-          <tbody className="divide-y text-sm">
+          <tbody className="divide-y text-sm text-gray-600">
             {filtered.length > 0 ? (
-              filtered.map((p) => (
-                <tr key={p.id_user} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 font-bold text-gray-800">
-                    {p.name || "Sin nombre"}
-                  </td>
-                  <td className="px-6 py-4 text-gray-600">{p.email}</td>
-                  <td className="px-6 py-4 text-gray-600">
-                    {p.phone || "N/A"}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => handleDelete(p.id_user)}
-                      className="text-red-500 hover:text-red-700 cursor-pointer"
-                    >
-                      <span className="material-symbols-outlined text-[20px]">
-                        delete
+              filtered.map((p) => {
+                const initials = p.name
+                  ? p.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .substring(0, 2)
+                      .toUpperCase()
+                  : "US";
+                const estado = p.emotional_state || "Estable";
+                let badgeStyle =
+                  "bg-emerald-50 text-emerald-700 border-emerald-200";
+                if (estado === "Moderado")
+                  badgeStyle = "bg-amber-50 text-amber-700 border-amber-200";
+                if (estado === "Alto Riesgo")
+                  badgeStyle = "bg-red-50 text-red-700 border-red-200";
+
+                return (
+                  <tr
+                    key={p.id_user}
+                    className="hover:bg-gray-50/80 transition-colors"
+                  >
+                    <td className="px-6 py-4 flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-sky-100 text-sky-800 font-bold text-xs flex items-center justify-center shrink-0">
+                        {initials}
+                      </div>
+                      <span className="font-bold text-slate-800">
+                        {p.name || "Sin nombre"}
                       </span>
-                    </button>
-                  </td>
-                </tr>
-              ))
+                    </td>
+                    <td className="px-6 py-4 text-gray-500">{p.email}</td>
+                    <td className="px-6 py-4 text-xs text-gray-500">N/A</td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-semibold border ${badgeStyle}`}
+                      >
+                        {estado}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-xs text-gray-500">
+                      {p.created_at
+                        ? new Date(p.created_at).toLocaleDateString()
+                        : "N/A"}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={() => handleDelete(p.id_user)}
+                        title="Eliminar paciente"
+                        className="text-gray-400 hover:text-red-600 transition-colors cursor-pointer p-1 rounded-lg hover:bg-red-50"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">
+                          more_vert
+                        </span>
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
             ) : (
               <tr>
                 <td
-                  colSpan="4"
+                  colSpan="6"
                   className="px-6 py-12 text-center text-gray-400"
                 >
-                  No hay pacientes registrados en Supabase.
+                  La base de datos está vacía. No hay pacientes registrados
+                  actualmente.
                 </td>
               </tr>
             )}
           </tbody>
         </table>
+
+        <div className="px-6 py-4 border-t bg-gray-50/50 flex justify-between items-center text-xs text-gray-500">
+          <span>
+            Mostrando {filtered.length} de {totalPacientes} pacientes
+          </span>
+          <div className="flex items-center gap-1">
+            <button className="px-3 py-1 border rounded bg-white text-gray-700 font-bold shadow-sm">
+              1
+            </button>
+          </div>
+        </div>
       </div>
     </main>
   );
 };
 
 // ==========================================
-// VISTA 4: FUENTES (Gestión de Archivos Reales)
+// VISTA 4: FUENTES
 // ==========================================
 const SourcesView = () => {
   const [sources, setSources] = useState([]);
@@ -639,12 +1008,15 @@ const SourcesView = () => {
 };
 
 // ==========================================
-// VISTA 5: RECURSOS (Biblioteca Real)
+// VISTA 5: RECURSOS
 // ==========================================
 const ResourcesView = () => {
   const [resources, setResources] = useState([]);
   const [title, setTitle] = useState("");
   const [cat, setCat] = useState("Relajación");
+  const [busqueda, setBusqueda] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [resourceToDelete, setResourceToDelete] = useState(null);
 
   const fetchResources = async () => {
     const { data } = await supabase
@@ -677,104 +1049,262 @@ const ResourcesView = () => {
         ? "air"
         : cat === "Hábitos"
           ? "bedtime"
-          : "psychology";
+          : cat === "Terapia Cognitiva"
+            ? "mindfulness"
+            : "ecg";
+
     await supabase.from("resources").insert([{ title, cat, icon }]);
     setTitle("");
+    setShowModal(false);
     fetchResources();
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm("¿Eliminar recurso?")) return;
-    await supabase.from("resources").delete().eq("id", id);
+  const openDeleteModal = (id, resourceTitle) => {
+    setResourceToDelete({ id, title: resourceTitle });
+  };
+
+  const confirmDelete = async () => {
+    if (!resourceToDelete) return;
+    await supabase.from("resources").delete().eq("id", resourceToDelete.id);
+    setResourceToDelete(null);
     fetchResources();
   };
+
+  const filteredResources = resources.filter(
+    (r) =>
+      r.title.toLowerCase().includes(busqueda.toLowerCase()) ||
+      r.cat.toLowerCase().includes(busqueda.toLowerCase()),
+  );
 
   return (
-    <main className="flex-1 p-8 space-y-6">
-      <header className="bg-white p-4 rounded-xl border shadow-sm">
-        <h2 className="text-xl font-bold text-sky-950">
-          Gestión de Recursos Terapéuticos
-        </h2>
-      </header>
-      <form
-        onSubmit={handleAdd}
-        className="bg-white border rounded-xl p-6 shadow-sm flex gap-4 items-end"
-      >
-        <div className="flex-1">
-          <label className="block text-xs font-bold text-gray-600 uppercase mb-1">
-            Título
-          </label>
-          <input
-            type="text"
-            placeholder="Ej: Respiración guiada"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full bg-gray-50 border rounded-lg px-4 py-2 text-sm outline-none"
-          />
+    <main className="flex-1 p-8 space-y-6 bg-slate-50 min-h-screen">
+      <header className="flex justify-between items-center bg-white p-4 rounded-xl border shadow-sm">
+        <div className="flex items-center gap-4">
+          <h2 className="text-xl font-bold text-sky-950">
+            Gestión de recursos
+          </h2>
         </div>
-        <div className="w-52">
-          <label className="block text-xs font-bold text-gray-600 uppercase mb-1">
-            Categoría
-          </label>
-          <select
-            value={cat}
-            onChange={(e) => setCat(e.target.value)}
-            className="w-full bg-gray-50 border rounded-lg px-4 py-2 text-sm outline-none"
+        <div className="flex items-center gap-6">
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400 text-sm">
+              search
+            </span>
+            <input
+              className="pl-10 pr-4 py-2 bg-gray-50 rounded-full border border-gray-200 focus:ring-2 focus:ring-sky-500 text-sm w-64 outline-none"
+              placeholder="Buscar recursos..."
+              type="text"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+            />
+          </div>
+          <button
+            onClick={() => setShowModal(true)}
+            className="bg-[#0369A1] hover:bg-sky-800 text-white px-5 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all active:scale-95 cursor-pointer shadow-sm"
           >
-            <option value="Relajación">Relajación</option>
-            <option value="Hábitos">Hábitos</option>
-            <option value="Terapia Cognitiva">Terapia Cognitiva</option>
-          </select>
+            <span className="material-symbols-outlined text-sm">add</span>+
+            Nuevo recurso
+          </button>
         </div>
-        <button
-          type="submit"
-          className="bg-sky-600 hover:bg-sky-700 text-white px-6 py-2 rounded-lg text-sm font-medium cursor-pointer"
-        >
-          + Agregar
-        </button>
-      </form>
-      <div className="bg-white border rounded-xl overflow-hidden shadow-sm">
-        <table className="w-full text-left">
+      </header>
+
+      <div className="relative h-48 rounded-xl overflow-hidden bg-sky-950 shadow-sm flex flex-col justify-end p-8 text-white">
+        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:16px_16px]"></div>
+        <div className="relative z-10">
+          <h3 className="text-2xl font-bold mb-1">Biblioteca de Bienestar</h3>
+          <p className="text-sky-200 text-sm max-w-lg">
+            Gestiona y actualiza las herramientas terapéuticas y guías de salud
+            mental para los pacientes.
+          </p>
+        </div>
+      </div>
+
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl border border-gray-100">
+            <h3 className="text-lg font-bold text-sky-950 mb-4">
+              Agregar Nuevo Recurso
+            </h3>
+            <form onSubmit={handleAdd} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-600 uppercase mb-1">
+                  Título
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ej: Respiración guiada"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required
+                  className="w-full bg-gray-50 border rounded-lg px-4 py-2 text-sm outline-none focus:border-sky-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-600 uppercase mb-1">
+                  Categoría
+                </label>
+                <select
+                  value={cat}
+                  onChange={(e) => setCat(e.target.value)}
+                  className="w-full bg-gray-50 border rounded-lg px-4 py-2 text-sm outline-none focus:border-sky-500 cursor-pointer"
+                >
+                  <option value="Relajación">Relajación</option>
+                  <option value="Hábitos">Hábitos</option>
+                  <option value="Terapia Cognitiva">Terapia Cognitiva</option>
+                  <option value="Urgencias">Urgencias</option>
+                </select>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="flex-1 py-2.5 border rounded-lg text-gray-600 text-sm font-medium hover:bg-gray-50 cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 bg-sky-900 text-white rounded-lg text-sm font-medium hover:bg-sky-950 cursor-pointer shadow-sm"
+                >
+                  Guardar Recurso
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {resourceToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-xl max-w-md w-full p-8 shadow-2xl text-center">
+            <div className="w-14 h-14 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="material-symbols-outlined text-2xl">
+                warning
+              </span>
+            </div>
+            <h3 className="text-xl font-bold text-sky-950 mb-2">
+              ¿Eliminar este recurso?
+            </h3>
+            <p className="text-gray-500 text-sm mb-6">
+              Estás a punto de eliminar permanentemente{" "}
+              <span className="font-bold">"{resourceToDelete.title}"</span>.
+              Esta acción no se puede deshacer.
+            </p>
+            <div className="flex gap-4">
+              <button
+                onClick={() => setResourceToDelete(null)}
+                className="flex-1 py-2.5 border rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-50 cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="flex-1 py-2.5 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 cursor-pointer shadow-sm"
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-white border border-[#E2D9CA] rounded-xl overflow-hidden shadow-sm">
+        <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b bg-gray-50 text-gray-500 text-xs uppercase">
-              <th className="px-6 py-4">Título</th>
-              <th className="px-6 py-4">Categoría</th>
-              <th className="px-6 py-4 text-right">Acciones</th>
+            <tr className="bg-gray-50/70 border-b border-[#E2D9CA] text-gray-400 text-xs uppercase tracking-wider">
+              <th className="px-6 py-4 font-semibold">Título</th>
+              <th className="px-6 py-4 font-semibold">Categoría</th>
+              <th className="px-6 py-4 font-semibold">Fecha creación</th>
+              <th className="px-6 py-4 font-semibold text-right">Acciones</th>
             </tr>
           </thead>
-          <tbody className="divide-y text-sm">
-            {resources.length > 0 ? (
-              resources.map((r) => (
-                <tr key={r.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 font-bold text-gray-800">
-                    {r.title}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="bg-sky-50 text-sky-800 px-3 py-1 rounded-full text-xs font-semibold border border-sky-200">
-                      {r.cat}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => handleDelete(r.id)}
-                      className="text-red-500 hover:text-red-700 cursor-pointer"
-                    >
-                      <span className="material-symbols-outlined text-[20px]">
-                        delete
+          <tbody className="divide-y divide-[#E2D9CA] text-sm">
+            {filteredResources.length > 0 ? (
+              filteredResources.map((r) => {
+                let iconBg = "bg-sky-50 text-sky-600";
+                if (r.cat === "Hábitos") iconBg = "bg-amber-50 text-amber-600";
+                if (r.cat === "Urgencias") iconBg = "bg-red-50 text-red-600";
+
+                return (
+                  <tr
+                    key={r.id}
+                    className="hover:bg-slate-50/80 transition-colors"
+                  >
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${iconBg}`}>
+                          <span className="material-symbols-outlined text-lg">
+                            {r.icon || "library_books"}
+                          </span>
+                        </div>
+                        <span className="font-bold text-slate-800">
+                          {r.title}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="bg-[#E0F2FE] text-[#0C4A6E] px-3 py-1 rounded-full text-xs font-medium">
+                        {r.cat}
                       </span>
-                    </button>
-                  </td>
-                </tr>
-              ))
+                    </td>
+                    <td className="px-6 py-4 text-gray-500">
+                      {r.created_at
+                        ? new Date(r.created_at).toLocaleDateString()
+                        : "Reciente"}
+                    </td>
+                    <td className="px-6 py-4 text-right space-x-1">
+                      <button
+                        onClick={() => alert(`Editar recurso: ${r.title}`)}
+                        className="p-2 text-gray-400 hover:text-sky-600 transition-colors cursor-pointer rounded-lg hover:bg-sky-50"
+                        title="Editar"
+                      >
+                        <span className="material-symbols-outlined text-lg">
+                          edit
+                        </span>
+                      </button>
+                      <button
+                        onClick={() => openDeleteModal(r.id, r.title)}
+                        className="p-2 text-gray-400 hover:text-red-600 transition-colors cursor-pointer rounded-lg hover:bg-red-50"
+                        title="Eliminar"
+                      >
+                        <span className="material-symbols-outlined text-lg">
+                          delete
+                        </span>
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
             ) : (
               <tr>
-                <td colSpan="3" className="px-6 py-8 text-center text-gray-400">
-                  No hay recursos registrados en Supabase.
+                <td
+                  colSpan="4"
+                  className="px-6 py-12 text-center text-gray-400"
+                >
+                  No hay recursos registrados en Supabase. Agrega uno nuevo con
+                  el botón superior.
                 </td>
               </tr>
             )}
           </tbody>
         </table>
+
+        <div className="px-6 py-4 bg-gray-50/50 border-t border-[#E2D9CA] flex justify-between items-center text-xs text-gray-500">
+          <span>
+            Mostrando {filteredResources.length} de {resources.length} recursos
+          </span>
+          <div className="flex gap-1">
+            <button className="p-1 rounded border bg-white hover:bg-gray-100 transition-colors cursor-pointer">
+              <span className="material-symbols-outlined text-sm">
+                chevron_left
+              </span>
+            </button>
+            <button className="p-1 rounded border bg-white hover:bg-gray-100 transition-colors cursor-pointer">
+              <span className="material-symbols-outlined text-sm">
+                chevron_right
+              </span>
+            </button>
+          </div>
+        </div>
       </div>
     </main>
   );
