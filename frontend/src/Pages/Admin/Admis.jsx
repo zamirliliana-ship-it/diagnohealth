@@ -326,20 +326,46 @@ const DashboardView = ({ setActiveTab }) => {
 };
 
 // ==========================================
-// VISTA 2: ESTADÍSTICAS (Diseño Avanzado + Supabase)
+// VISTA 2: ESTADÍSTICAS (Dinámica y Conectada a Supabase)
 // ==========================================
 const StatisticsView = () => {
   const [totalUsers, setTotalUsers] = useState(0);
+  const [totalSources, setTotalSources] = useState(0);
+  const [totalResources, setTotalResources] = useState(0);
   const [filter, setFilter] = useState("7D");
   const [activeSubTab, setActiveSubTab] = useState("general");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase
-      .from("user")
-      .select("*", { count: "exact", head: true })
-      .then(({ count }) => {
-        if (count !== null) setTotalUsers(count);
-      });
+    const fetchRealStats = async () => {
+      setLoading(true);
+      try {
+        // 1. Obtener conteo real de usuarios
+        const { count: usersCount } = await supabase
+          .from("user")
+          .select("*", { count: "exact", head: true });
+
+        // 2. Obtener conteo real de fuentes (archivos subidos)
+        const { count: sourcesCount } = await supabase
+          .from("sources")
+          .select("*", { count: "exact", head: true });
+
+        // 3. Obtener conteo real de recursos terapéuticos
+        const { count: resourcesCount } = await supabase
+          .from("resources")
+          .select("*", { count: "exact", head: true });
+
+        setTotalUsers(usersCount || 0);
+        setTotalSources(sourcesCount || 0);
+        setTotalResources(resourcesCount || 0);
+      } catch (error) {
+        console.error("Error al cargar estadísticas reales:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRealStats();
   }, []);
 
   return (
@@ -365,12 +391,12 @@ const StatisticsView = () => {
             <span className="material-symbols-outlined text-sm">
               calendar_today
             </span>
-            <span>01 Nov - 07 Nov</span>
+            <span>Datos en tiempo real</span>
           </div>
         </div>
       </header>
 
-      {/* Sub-pestallas de Estadísticas */}
+      {/* Sub-pestañas de Estadísticas */}
       <div className="flex border-b border-gray-200 gap-8 text-sm font-semibold">
         <button
           onClick={() => setActiveSubTab("general")}
@@ -422,38 +448,66 @@ const StatisticsView = () => {
         </div>
       </div>
 
-      {/* Sección de Gráficas Superiores */}
+      {/* Tarjetas de Métricas Principales (Conectadas a BD) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white border border-[#E2D9CA] rounded-xl p-6 shadow-sm">
+          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+            Total Usuarios Registrados
+          </h3>
+          <p className="text-3xl font-extrabold text-sky-950 mt-2">
+            {loading ? "..." : totalUsers}
+          </p>
+          <span className="text-xs text-gray-400 mt-1 block">Tabla: public.user</span>
+        </div>
+
+        <div className="bg-white border border-[#E2D9CA] rounded-xl p-6 shadow-sm">
+          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+            Guías / Fuentes Subidas
+          </h3>
+          <p className="text-3xl font-extrabold text-sky-950 mt-2">
+            {loading ? "..." : totalSources}
+          </p>
+          <span className="text-xs text-gray-400 mt-1 block">Tabla: public.sources</span>
+        </div>
+
+        <div className="bg-white border border-[#E2D9CA] rounded-xl p-6 shadow-sm">
+          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+            Recursos Terapéuticos
+          </h3>
+          <p className="text-3xl font-extrabold text-sky-950 mt-2">
+            {loading ? "..." : totalResources}
+          </p>
+          <span className="text-xs text-gray-400 mt-1 block">Tabla: public.resources</span>
+        </div>
+      </div>
+
+      {/* Sección de Gráficas / Estado Dinámico */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Gráfica de Usuarios Activos Diarios (DAU) */}
         <div className="lg:col-span-8 bg-white border border-[#E2D9CA] rounded-xl p-6 shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <div>
               <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                Usuarios Activos Diarios (DAU)
+                Actividad Basada en Registros (Supabase)
               </h3>
               <div className="flex items-baseline gap-3 mt-1">
                 <p className="text-3xl font-extrabold text-sky-950">
-                  {totalUsers > 0 ? totalUsers * 120 : 0}
+                  {totalUsers} Usuarios
                 </p>
-                <span className="text-xs text-emerald-600 font-semibold">
-                  +12.5%
+                <span className="text-xs text-sky-600 font-semibold">
+                  Sincronizado
                 </span>
               </div>
             </div>
-            <span className="material-symbols-outlined text-gray-400 cursor-pointer">
-              more_vert
-            </span>
           </div>
 
-          <div className="h-48 w-full mt-6 flex items-end justify-between border-b pb-2 px-4">
-            {totalUsers === 0 ? (
-              <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
-                Sin tráfico suficiente en la plataforma (0 registros en
-                Supabase).
+          <div className="h-48 w-full mt-6 flex items-center justify-center border-b pb-2 px-4">
+            {totalUsers === 0 && totalSources === 0 ? (
+              <div className="text-center text-gray-400 text-sm">
+                Sin registros en la base de datos (0 en Supabase). Comienza agregando usuarios o archivos.
               </div>
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-sky-800 font-medium text-sm">
-                Gráfica sincronizada con datos de actividad activa.
+              <div className="text-center text-sky-900 font-medium text-sm">
+                Mostrando métricas reales de tus tablas conectadas en Supabase.
               </div>
             )}
           </div>
@@ -468,152 +522,28 @@ const StatisticsView = () => {
           </div>
         </div>
 
-        {/* Tarjeta de Retención */}
+        {/* Tarjeta de Resumen */}
         <div className="lg:col-span-4 bg-sky-950 text-white rounded-xl p-6 shadow-sm flex flex-col justify-between">
           <div>
             <h3 className="text-xs uppercase tracking-wider text-sky-300 font-semibold">
-              Tasa de Retención
+              Estado del Sistema
             </h3>
-            <p className="text-5xl font-extrabold mt-3">
-              {totalUsers > 0 ? "78.4%" : "0%"}
+            <p className="text-4xl font-extrabold mt-3">
+              {totalUsers > 0 ? "Activo" / "Conectado" : "Sin Datos"}
             </p>
             <p className="text-xs text-sky-300 mt-2">
-              Mes actual vs promedio anual
+              Base de datos en producción lista.
             </p>
           </div>
           <div className="space-y-2 mt-6">
             <div className="flex justify-between text-xs text-sky-200">
-              <span>Meta: 80%</span>
-              <span className="text-emerald-400 font-bold">+4.3%</span>
+              <span>Registros Totales</span>
+              <span className="text-emerald-400 font-bold">{totalUsers + totalSources + totalResources}</span>
             </div>
             <div className="h-2 w-full bg-sky-900 rounded-full overflow-hidden">
               <div
                 className="h-full bg-sky-400 rounded-full"
-                style={{ width: totalUsers > 0 ? "78.4%" : "0%" }}
-              ></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Sección de Gráficas Inferiores */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Sesiones de Chat */}
-        <div className="lg:col-span-8 bg-white border border-[#E2D9CA] rounded-xl p-6 shadow-sm">
-          <div className="flex justify-between items-center mb-4">
-            <h4 className="font-bold text-sky-950 text-sm">
-              Sesiones de Chat por Día
-            </h4>
-            <div className="flex items-center gap-4 text-xs text-gray-500">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-sky-400"></span>{" "}
-                Completadas
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-sky-800"></span>{" "}
-                Abandono
-              </span>
-            </div>
-          </div>
-          <div className="h-44 flex items-center justify-center text-gray-400 text-xs border-b">
-            {totalUsers === 0
-              ? "No hay sesiones de chat registradas todavía."
-              : "Métricas de chat activas."}
-          </div>
-        </div>
-
-        {/* Segmentación Emocional */}
-        <div className="lg:col-span-4 bg-white border border-[#E2D9CA] rounded-xl p-6 shadow-sm flex flex-col justify-between">
-          <h4 className="font-bold text-sky-950 text-sm mb-2">
-            Segmentación Emocional
-          </h4>
-          <div className="flex items-center justify-center h-36 my-auto">
-            <div className="text-center">
-              <span className="text-2xl font-bold text-sky-950">Top 3</span>
-              <p className="text-xs text-gray-400">Estados Clínicos</p>
-            </div>
-          </div>
-          <div className="space-y-1.5 text-xs text-gray-600 pt-2 border-t">
-            <div className="flex justify-between items-center">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-sky-400"></span> Calma
-              </span>
-              <span className="font-bold">48%</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>{" "}
-                Enfoque
-              </span>
-              <span className="font-bold">30%</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-amber-500"></span>{" "}
-                Ansiedad
-              </span>
-              <span className="font-bold">22%</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Embudo de Conversación */}
-      <div className="bg-white border border-[#E2D9CA] rounded-xl p-6 shadow-sm space-y-4">
-        <div className="flex justify-between items-center">
-          <h4 className="font-bold text-sky-950 text-sm">
-            EMBUDO DE CONVERSIÓN (COMPLETADOS VS ABANDONO)
-          </h4>
-          <span className="text-xs text-sky-600 font-semibold cursor-pointer hover:underline">
-            Ver detalles
-          </span>
-        </div>
-        <div className="space-y-3 pt-2">
-          <div>
-            <div className="flex justify-between text-xs mb-1 font-medium text-gray-600">
-              <span>Inicio</span>
-              <span>12,450 Sesiones (100%)</span>
-            </div>
-            <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-sky-700 rounded-full"
-                style={{ width: "100%" }}
-              ></div>
-            </div>
-          </div>
-          <div>
-            <div className="flex justify-between text-xs mb-1 font-medium text-gray-600">
-              <span>Identificación</span>
-              <span>10,500 Usuarios (84%)</span>
-            </div>
-            <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-sky-700 rounded-full"
-                style={{ width: "84%" }}
-              ></div>
-            </div>
-          </div>
-          <div>
-            <div className="flex justify-between text-xs mb-1 font-medium text-gray-600">
-              <span>Exploración</span>
-              <span>7,440 Usuarios (60%)</span>
-            </div>
-            <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-sky-700 rounded-full"
-                style={{ width: "60%" }}
-              ></div>
-            </div>
-          </div>
-          <div>
-            <div className="flex justify-between text-xs mb-1 font-medium text-gray-600">
-              <span>Conclusión</span>
-              <span>5,250 Completados (42%)</span>
-            </div>
-            <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-sky-700 rounded-full"
-                style={{ width: "42%" }}
+                style={{ width: totalUsers > 0 ? "100% " : "0%" }}
               ></div>
             </div>
           </div>
@@ -883,11 +813,12 @@ const PatientsView = () => {
 };
 
 // ==========================================
-// VISTA 4: FUENTES
+// VISTA 4: FUENTES (Subida de Archivos Reales)
 // ==========================================
 const SourcesView = () => {
   const [sources, setSources] = useState([]);
-  const [fileName, setFileName] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   const fetchSources = async () => {
     const { data } = await supabase
@@ -912,17 +843,56 @@ const SourcesView = () => {
     };
   }, []);
 
-  const handleAdd = async (e) => {
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
+  const handleUpload = async (e) => {
     e.preventDefault();
-    if (!fileName.trim()) return;
-    const type = fileName.split(".").pop().toUpperCase() || "TXT";
-    await supabase.from("sources").insert([{ name: fileName, type }]);
-    setFileName("");
-    fetchSources();
+    if (!selectedFile) {
+      alert("Por favor selecciona un archivo primero.");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const fileName = `${Date.now()}_${selectedFile.name}`;
+
+      // 1. Subir archivo al Storage de Supabase (asegúrate de tener un bucket llamado 'sources' o 'documentos')
+      const { data: storageData, error: storageError } = await supabase.storage
+        .from("sources")
+        .upload(fileName, selectedFile);
+
+      if (storageError) throw storageError;
+
+      // 2. Obtener extensión para el tipo
+      const type = selectedFile.name.split(".").pop().toUpperCase() || "PDF";
+
+      // 3. Guardar el registro en la tabla 'sources' de la base de datos
+      const { error: dbError } = await supabase
+        .from("sources")
+        .insert([{ name: selectedFile.name, type }]);
+
+      if (dbError) throw dbError;
+
+      setSelectedFile(null);
+      alert("¡Guía o manual subido con éxito!");
+      fetchSources();
+    } catch (error) {
+      console.error("Error al subir archivo:", error);
+      alert(
+        "Error al subir el archivo: " +
+          (error.message || "Verifica tu bucket de Supabase Storage"),
+      );
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("¿Eliminar guía clínica?")) return;
+    if (!confirm("¿Deseas eliminar esta guía clínica?")) return;
     await supabase.from("sources").delete().eq("id", id);
     fetchSources();
   };
@@ -934,8 +904,9 @@ const SourcesView = () => {
           Gestión de Fuentes de Conocimiento
         </h2>
       </header>
+
       <form
-        onSubmit={handleAdd}
+        onSubmit={handleUpload}
         className="border-2 border-dashed border-gray-300 p-8 bg-white flex flex-col items-center justify-center rounded-xl shadow-sm"
       >
         <span className="material-symbols-outlined text-[40px] text-sky-600 mb-2">
@@ -944,22 +915,31 @@ const SourcesView = () => {
         <h3 className="text-lg font-bold text-gray-800">
           Sube guías clínicas o manuales
         </h3>
-        <div className="flex w-full max-w-md gap-2 mt-4">
+        <p className="text-xs text-gray-400 mb-4">
+          Selecciona un archivo PDF o documento de texto
+        </p>
+
+        <div className="flex flex-col sm:flex-row w-full max-w-md gap-3 items-center">
           <input
-            type="text"
-            placeholder="Ej: Protocolo_Ansiedad.pdf"
-            value={fileName}
-            onChange={(e) => setFileName(e.target.value)}
-            className="flex-1 bg-gray-50 border rounded-lg px-4 py-2 text-sm outline-none"
+            type="file"
+            onChange={handleFileChange}
+            className="flex-1 bg-gray-50 border rounded-lg px-4 py-2 text-sm outline-none file:mr-4 file:py-1 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100 cursor-pointer"
           />
           <button
             type="submit"
-            className="bg-sky-600 hover:bg-sky-700 text-white px-5 py-2 rounded-lg text-sm font-medium cursor-pointer"
+            disabled={uploading}
+            className="bg-sky-600 hover:bg-sky-700 text-white px-6 py-2 rounded-lg text-sm font-medium cursor-pointer transition-all disabled:opacity-50"
           >
-            Subir
+            {uploading ? "Subiendo..." : "Subir"}
           </button>
         </div>
+        {selectedFile && (
+          <span className="text-xs text-emerald-600 font-semibold mt-2">
+            Archivo seleccionado: {selectedFile.name}
+          </span>
+        )}
       </form>
+
       <div className="bg-white border rounded-xl overflow-hidden shadow-sm">
         <table className="w-full text-left">
           <thead>
@@ -985,6 +965,7 @@ const SourcesView = () => {
                     <button
                       onClick={() => handleDelete(s.id)}
                       className="text-red-500 hover:text-red-700 cursor-pointer"
+                      title="Eliminar fuente"
                     >
                       <span className="material-symbols-outlined text-[20px]">
                         delete
@@ -995,7 +976,10 @@ const SourcesView = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="3" className="px-6 py-8 text-center text-gray-400">
+                <td
+                  colSpan="3"
+                  className="px-6 py-12 text-center text-gray-400"
+                >
                   No hay fuentes registradas en Supabase.
                 </td>
               </tr>
