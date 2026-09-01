@@ -82,18 +82,16 @@ function ProtectedRoute({ children }) {
     );
   }
 
-  if (!session) {
-    return (
-      <Navigate
-        to="/sesion"
-        replace
-        state={{
-          from: location.pathname,
-        }}
-      />
-    );
-  }
-
+ 
+if (!session) {
+  return (
+    <Navigate
+      to="/login" 
+      replace
+      state={{ from: location.pathname }}
+    />
+  );
+}
   return children;
 }
 

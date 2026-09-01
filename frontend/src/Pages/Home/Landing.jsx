@@ -1,269 +1,788 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, ArrowRight, ArrowUpRight, Share2, Globe, Bot, Heart, Activity, ShieldCheck, ClipboardList } from 'lucide-react';
+import {
+  Menu,
+  X,
+  ArrowRight,
+  ArrowUpRight,
+  Share2,
+  Globe,
+  Bot,
+  Heart,
+  Activity,
+  ShieldCheck,
+  ClipboardList
+} from 'lucide-react';
 
 function Landing() {
+  // Controla la visibilidad del menú de navegación en pantallas pequeñas (< lg)
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <div className="App">
 
+      {/* ================================
+          ANIMACIONES
+          Definidas aquí (en vez de un CSS global) para mantener el
+          componente autocontenido. Si se reutilizan en otras páginas,
+          conviene moverlas a un archivo CSS/Tailwind config compartido.
+      ================================= */}
       <style>{`
         @keyframes dh-float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-14px); }
+          0%, 100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-10px);
+          }
         }
+
         @keyframes dh-float-slow {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-10px) rotate(3deg); }
+          0%, 100% {
+            transform: translateY(0px) rotate(0deg);
+          }
+          50% {
+            transform: translateY(-8px) rotate(3deg);
+          }
         }
+
         @keyframes dh-breathe {
-          0%, 100% { transform: scale(1); opacity: 0.5; }
-          50% { transform: scale(1.5); opacity: 0; }
+          0%, 100% {
+            transform: scale(1);
+            opacity: 0.4;
+          }
+          50% {
+            transform: scale(1.5);
+            opacity: 0;
+          }
         }
-        .dh-float { animation: dh-float 5s ease-in-out infinite; }
-        .dh-float-slow { animation: dh-float-slow 7s ease-in-out infinite; }
-        .dh-breathe-ring { animation: dh-breathe 3s ease-in-out infinite; }
+
+        .dh-float {
+          animation: dh-float 5s ease-in-out infinite;
+        }
+
+        .dh-float-slow {
+          animation: dh-float-slow 7s ease-in-out infinite;
+        }
+
+        .dh-breathe-ring {
+          animation: dh-breathe 3s ease-in-out infinite;
+        }
+
+        /*
+          Accesibilidad: respeta la preferencia del sistema operativo de
+          reducir animaciones. Ojo: esto solo cubre las animaciones
+          personalizadas (dh-*). La clase de Tailwind animate-pulse
+          usada mas abajo en el circulo decorativo NO esta cubierta por
+          esta regla; si se quiere accesibilidad completa, hay que
+          desactivarla tambien aqui o quitar animate-pulse del JSX.
+        */
         @media (prefers-reduced-motion: reduce) {
-          .dh-float, .dh-float-slow, .dh-breathe-ring, .animate-pulse { animation: none; }
+          .dh-float,
+          .dh-float-slow,
+          .dh-breathe-ring {
+            animation: none;
+          }
         }
       `}</style>
 
-      <header className="sticky top-0 w-full z-50 bg-[#FAF7F2]/90 backdrop-blur-md border-b border-gray-200">
-        <nav className="flex justify-between items-center w-full px-4 md:px-8 py-4 max-w-[1400px] mx-auto h-20">
-          <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
-            <div className="relative flex h-8 w-8 shrink-0 items-center justify-center sm:h-9 sm:w-9">
-              <span className="dh-breathe-ring absolute inset-0 rounded-full bg-[#0369A1]" />
-              <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#0369A1] to-[#0C4A6E] text-white sm:h-9 sm:w-9">
-                <Activity size={16} />
-              </span>
+
+      {/* ================================
+          HEADER
+          Barra de navegación fija (sticky) con logo, links de escritorio,
+          botones de sesión/registro y botón hamburguesa para móvil.
+      ================================= */}
+      <header className="sticky top-0 w-full z-50 bg-[#FAF7F2]/95 backdrop-blur-md border-b border-gray-200">
+
+        <nav className="flex justify-between items-center w-full px-4 md:px-8 py-4 max-w-[1400px] mx-auto min-h-[80px]">
+
+          {/* LOGO */}
+           <div className="flex items-center gap-2.5">
+ 
+            <div className="relative flex h-10 w-10 items-center justify-center">
+
+ 
+              <img
+                src="/imagenes/diagnohealth-logo.png"
+                alt="Logo de DIAGNOHEALTH"
+                className="relative h-10 w-10 object-contain"
+              />
+ 
             </div>
-            <div className="truncate text-lg font-bold text-[#0C4A6E] sm:text-2xl">
+ 
+
+            <div className="text-lg sm:text-2xl font-bold text-[#0C4A6E]">
               DIAGNOHEALTH
             </div>
-          </div>
-          <div className="hidden md:flex items-center gap-6">
-            <a className="px-4 py-2 text-sm text-gray-600 font-bold transition-colors hover:text-[#0369A1]" href="#">Funcionalidades</a>
 
-            {/* NUEVO: ENLACE AL TEST DE BIENESTAR (Corregido sin subrayado permanente) */}
-            <Link to="/test-bienestar" className="px-4 py-2 text-sm text-gray-600 font-bold hover:text-[#0369A1] flex items-center gap-1.5 transition-colors">
-              <ClipboardList size={16} aria-hidden="true" />
+          </div>
+
+
+          {/*
+            MENÚ DESKTOP
+          */}
+          <div className="hidden lg:flex items-center gap-3">
+
+            <a
+              href="#funcionalidades"
+              className="px-4 py-2 text-sm text-gray-600 font-semibold hover:text-[#0369A1] transition-colors"
+            >
+              Funcionalidades
+            </a>
+
+            <Link
+              to="/test-bienestar"
+              className="px-4 py-2 text-sm text-gray-600 font-semibold hover:text-[#0369A1] flex items-center gap-1.5 transition-colors"
+            >
+              <ClipboardList size={16} />
               Test de Bienestar
             </Link>
 
-            <a className="px-4 py-2 text-sm text-gray-600 hover:text-[#0369A1] transition-colors" href="#">Recursos</a>
-            <a className="px-4 py-2 text-sm text-gray-600 hover:text-[#0369A1] transition-colors" href="#">Comunidad</a>
-            <a className="px-4 py-2 text-sm text-gray-600 hover:text-[#0369A1] transition-colors" href="#">Ayuda</a>
+            <a
+              href="#recursos"
+              className="px-4 py-2 text-sm text-gray-600 hover:text-[#0369A1] transition-colors"
+            >
+              Recursos
+            </a>
+
           </div>
+
+
+          {/* BOTONES (sesión / registro / hamburguesa) */}
           <div className="flex items-center gap-2 sm:gap-3">
-            <Link to="/inicioS" className="hidden md:block px-6 py-2.5 rounded-lg border border-gray-300 text-[#0369A1] text-sm font-medium active:scale-95 duration-150 transition-all hover:bg-gray-50">
-              Iniciar sesión
+
+           <Link
+           to="/login"   // ✅ antes decía "/inicioS"
+            className="hidden md:block px-5 lg:px-6 py-2.5 rounded-xl border border-[#0369A1]/30 text-[#0C4A6E] text-sm font-semibold hover:bg-sky-50 transition-all"
+          >
+             Iniciar sesión
             </Link>
-            <Link to="/registro" className="hidden sm:block px-4 py-2 sm:px-6 sm:py-2.5 rounded-lg bg-gradient-to-br from-[#0369A1] to-[#0C4A6E] text-white text-sm font-medium active:scale-95 duration-150 transition-all shadow-sm hover:shadow-md">
+
+            <Link
+              to="/registro"
+              className="hidden sm:block px-5 lg:px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#0369A1] to-[#0C4A6E] text-white text-sm font-semibold shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
+            >
               Registrarse
             </Link>
+
+            {/* Botón hamburguesa: solo visible por debajo de `lg` */}
             <button
               type="button"
-              onClick={() => setMenuOpen((prev) => !prev)}
-              aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
-              aria-expanded={menuOpen}
-              className="md:hidden flex items-center justify-center p-2 rounded-lg text-gray-600 transition hover:bg-gray-100"
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
+              className="lg:hidden flex items-center justify-center p-2 rounded-lg text-gray-600 hover:bg-gray-100"
             >
-              {menuOpen ? <X size={22} /> : <Menu size={22} />}
+              {menuOpen ? <X size={23} /> : <Menu size={23} />}
             </button>
+
           </div>
+
         </nav>
 
-        {/* MENÚ MÓVIL */}
-        {menuOpen && (
-          <div className="md:hidden border-t border-gray-200 bg-[#FAF7F2] px-4 pb-4">
-            <div className="flex flex-col divide-y divide-gray-200">
-              <a onClick={() => setMenuOpen(false)} className="py-3 text-sm font-bold text-gray-700 hover:text-[#0369A1]" href="#">Funcionalidades</a>
 
-              <Link onClick={() => setMenuOpen(false)} to="/test-bienestar" className="py-3 text-sm font-bold text-gray-700 hover:text-[#0369A1] flex items-center gap-1.5">
-                <ClipboardList size={16} aria-hidden="true" />
+        {/* ================================
+            MENÚ MÓVIL
+            Se renderiza condicionalmente solo cuando `menuOpen === true`.
+            Cada link cierra el menú al hacer clic (onClick setMenuOpen(false)).
+        ================================= */}
+        {menuOpen && (
+
+          <div className="lg:hidden border-t border-gray-200 bg-[#FAF7F2] px-4 pb-5">
+
+            <div className="flex flex-col divide-y divide-gray-200">
+
+              <a
+                onClick={() => setMenuOpen(false)}
+                href="#funcionalidades"
+                className="py-3 text-sm font-semibold text-gray-700 hover:text-[#0369A1]"
+              >
+                Funcionalidades
+              </a>
+
+              <Link
+                onClick={() => setMenuOpen(false)}
+                to="/test-bienestar"
+                className="py-3 text-sm font-semibold text-gray-700 hover:text-[#0369A1] flex items-center gap-2"
+              >
+                <ClipboardList size={16} />
                 Test de Bienestar
               </Link>
 
-              <a onClick={() => setMenuOpen(false)} className="py-3 text-sm text-gray-700 hover:text-[#0369A1]" href="#">Recursos</a>
-              <a onClick={() => setMenuOpen(false)} className="py-3 text-sm text-gray-700 hover:text-[#0369A1]" href="#">Comunidad</a>
-              <a onClick={() => setMenuOpen(false)} className="py-3 text-sm text-gray-700 hover:text-[#0369A1]" href="#">Ayuda</a>
+              <a
+                onClick={() => setMenuOpen(false)}
+                href="#recursos"
+                className="py-3 text-sm text-gray-700 hover:text-[#0369A1]"
+              >
+                Recursos
+              </a>
+
+              <a
+                onClick={() => setMenuOpen(false)}
+                href="#comunidad"
+                className="py-3 text-sm text-gray-700 hover:text-[#0369A1]"
+              >
+                Comunidad
+              </a>
+
+              <a
+                onClick={() => setMenuOpen(false)}
+                href="#ayuda"
+                className="py-3 text-sm text-gray-700 hover:text-[#0369A1]"
+              >
+                Ayuda
+              </a>
+
             </div>
 
-            <div className="mt-3 flex flex-col gap-2.5">
+
+            <div className="mt-4 flex flex-col gap-2.5">
+
               <Link
                 onClick={() => setMenuOpen(false)}
                 to="/inicioS"
-                className="w-full rounded-lg border border-gray-300 py-2.5 text-center text-sm font-medium text-[#0369A1] transition hover:bg-gray-50"
+                className="w-full rounded-xl border border-[#0369A1]/30 py-2.5 text-center text-sm font-semibold text-[#0369A1]"
               >
                 Iniciar sesión
               </Link>
+
               <Link
                 onClick={() => setMenuOpen(false)}
                 to="/registro"
-                className="w-full rounded-lg bg-gradient-to-br from-[#0369A1] to-[#0C4A6E] py-2.5 text-center text-sm font-medium text-white shadow-sm"
+                className="w-full rounded-xl bg-gradient-to-r from-[#0369A1] to-[#0C4A6E] py-2.5 text-center text-sm font-semibold text-white"
               >
                 Registrarse
               </Link>
+
             </div>
+
           </div>
+
         )}
+
       </header>
 
+
+      {/* ================================
+          HERO
+          Sección principal above-the-fold: título, descripción, dos CTAs
+          y una imagen ilustrativa con elementos flotantes decorativos.
+      ================================= */}
       <main className="bg-[#FAF7F2] relative overflow-hidden">
 
-        {/* Textura de fondo, mismos tonos de marca */}
-        <div className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-[#0369A1] opacity-[0.07] blur-[110px]" />
-        <div className="pointer-events-none absolute top-1/4 -right-40 h-[30rem] w-[30rem] rounded-full bg-[#0C4A6E] opacity-[0.06] blur-[130px]" />
+        {/* Manchas decorativas de fondo (blur), puramente visuales */}
 
-        <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-8 sm:py-10 md:py-24 flex flex-col md:flex-row items-center justify-between gap-8 sm:gap-10 relative z-10">
-          <div className="flex-1 text-center md:text-left space-y-4">
-            <div className="inline-flex items-center gap-1 px-3 py-1 bg-sky-100 rounded-full text-[#0369A1] text-sm">
-              <ShieldCheck size={16} />
-              Tu bienestar es nuestra prioridad
-            </div>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[#0C4A6E] leading-tight">
-              Encuentra tu <br className="hidden md:block" /> <span className="bg-gradient-to-r from-[#0369A1] to-[#0C4A6E] bg-clip-text text-transparent">equilibrio mental</span>
-            </h1>
-            <p className="text-base md:text-lg text-gray-600 max-w-[540px]">
-              Tu espacio seguro para el bienestar emocional y el crecimiento personal. Descubre herramientas diseñadas por expertos para cultivar la calma en tu día a día.
-            </p>
-          </div>
-          <div className="flex-1 relative w-full flex justify-center">
-            <div className="relative w-full max-w-[500px]">
-              <div className="absolute -top-12 -left-12 w-64 h-64 bg-sky-200/20 rounded-full blur-3xl animate-pulse"></div>
-              <div className="absolute -bottom-8 -right-8 w-48 h-48 bg-sky-300/10 rounded-full blur-2xl"></div>
+        <div className="pointer-events-none absolute -top-32 -left-32 w-96 h-96 rounded-full bg-sky-200/30 blur-3xl" />
 
-              {/* Íconos flotantes decorativos, coherentes con el tema de calma */}
-              <div className="dh-float absolute -top-4 right-6 z-20 hidden h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-lg sm:flex">
-                <Heart size={24} className="text-[#0369A1]" />
+        <div className="pointer-events-none absolute top-1/3 -right-40 w-[500px] h-[500px] rounded-full bg-blue-100/40 blur-3xl" />
+
+
+        <section className="relative min-h-[calc(100vh-80px)] flex items-center overflow-hidden">
+
+          <div className="max-w-[1400px] w-full mx-auto px-5 md:px-8">
+
+            <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-10 lg:gap-4">
+
+
+              {/* ================================
+                  TEXTO HERO
+              ================================= */}
+              <div className="relative z-20 text-center md:text-left pt-12 md:pt-0">
+
+                {/* ETIQUETA */}
+
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-sky-100 text-[#0369A1] text-sm font-semibold">
+
+                  <ShieldCheck size={17} />
+
+                  Tu bienestar es nuestra prioridad
+
+                </div>
+
+
+                {/* TÍTULO */}
+
+                <h1 className="mt-5 text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.05] text-[#0C4A6E]">
+
+                  Cuida tu
+
+                  <span className="block bg-gradient-to-r from-[#0369A1] to-[#0C4A6E] bg-clip-text text-transparent">
+
+                    bienestar mental
+
+                  </span>
+
+                </h1>
+
+
+                {/* DESCRIPCIÓN */}
+
+                <p className="mt-6 max-w-xl mx-auto md:mx-0 text-base sm:text-lg leading-relaxed text-gray-600">
+
+                Un espacio seguro y empático donde puedes expresar lo que sientes
+                comprender tus emociones y encontrar herramientas para cuidar de ti.
+                 DiagnoHealth te acompaña en cada paso, ofreciéndote orientación y recursos
+                 para fortalecer tu bienestar emocional y conocerte mejor.
+
+                </p>
+
+                {/* INFO SECUNDARIA (badges) */}
+
+                <div className="mt-8 flex flex-wrap justify-center md:justify-start gap-x-7 gap-y-3 text-sm text-gray-500">
+
+                  <div className="flex items-center gap-2">
+
+                    <Heart
+                      size={17}
+                      className="text-[#0369A1]"
+                    />
+
+                    Apoyo emocional
+
+                  </div>
+
+
+                  <div className="flex items-center gap-2">
+
+                    <Bot
+                      size={17}
+                      className="text-[#0369A1]"
+                    />
+
+                    Chatbot disponible 24/7
+
+                  </div>
+
+                </div>
+
               </div>
-              <div className="dh-float-slow absolute bottom-8 -left-6 z-20 hidden h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-lg sm:flex">
-                <Bot size={24} className="text-[#0C4A6E]" />
+
+
+              {/* ================================
+                  IMAGEN HERO
+              ================================= */}
+              <div className="relative z-10 flex justify-center md:justify-end">
+
+                {/* Mancha circular de fondo detrás de la imagen */}
+
+                <div
+                  className="
+                    absolute
+                    w-[380px]
+                    h-[380px]
+                    sm:w-[500px]
+                    sm:h-[500px]
+                    lg:w-[620px]
+                    lg:h-[620px]
+                    rounded-full
+                    bg-sky-100/50
+                    right-[-100px]
+                    top-1/2
+                    -translate-y-1/2
+                  "
+                />
+
+                <div
+                  className="
+                    absolute
+                    w-16
+                    h-16
+                    rounded-full
+                    bg-[#0369A1]/10
+                    top-10
+                    right-12
+                    animate-pulse
+                  "
+                />
+
+
+                {/* Ícono de corazón flotante */}
+
+                <div
+                  className="
+                    absolute
+                    z-30
+                    top-8
+                    right-4
+                    sm:right-14
+                    w-12
+                    h-12
+                    rounded-full
+                    bg-white
+                    shadow-lg
+                    flex
+                    items-center
+                    justify-center
+                    dh-float
+                  "
+                >
+
+                  <Heart
+                    size={22}
+                    className="text-pink-400 fill-pink-100"
+                  />
+
+                </div>
+
+
+                {/* Ícono de bot flotante */}
+
+                <div
+                  className="
+                    absolute
+                    z-30
+                    bottom-10
+                    left-2
+                    sm:left-10
+                    w-12
+                    h-12
+                    rounded-full
+                    bg-white
+                    shadow-lg
+                    flex
+                    items-center
+                    justify-center
+                    dh-float-slow
+                  "
+                >
+
+                  <Bot
+                    size={22}
+                    className="text-[#0369A1]"
+                  />
+
+                </div>
+
+                <img
+                  src="/imagenes/imagenes/hero-mental.png"
+                  alt="Personas brindándose apoyo emocional"
+                  width={650}
+                  height={650}
+                  className="
+                    relative
+                    z-10
+                    w-full
+                    max-w-[650px]
+                    h-auto
+                    object-contain
+                    drop-shadow-[0_20px_35px_rgba(12,74,110,0.10)]
+                    dh-float
+                  "
+                />
+
               </div>
 
-              <img
-                alt="Meditación y calma"
-                className="relative z-10 w-full h-auto object-cover rounded-xl"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWq5youNqBMS2uAGdTZAYNjSwgK-mfkDX90bfsXnQYEbXNtwYTl7vdVg7tk6Vz2v2QHagywsydQwFhInygPfn4x2HkZabog_o0tHzcLQuzHRoSCiEl5pcCtn-1X7cBuM4XF4B3lFjn-FNR8s_YJGNKJ1YeQ7wLV8Qp1xmcmo0In_sy7Ij015VtTcfUQdPMmhPXo89qDLJvPyaQtAKLEgypyp8sYR2wQp3Zx8MtXA7cwPwVK05vqM3QXt06TeHLzI7U6IDWc7NJUsU"
-              />
             </div>
+
           </div>
-        </div>
+
+        </section>
+
       </main>
 
-      <section className="bg-[#FAF7F2] py-10 sm:py-16 relative overflow-hidden">
+
+      {/* ================================
+          HERRAMIENTAS / FUNCIONALIDADES
+          Tres tarjetas con ícono, título, descripción y link.
+      ================================= */}
+      <section
+        id="funcionalidades"
+        className="bg-[#FAF7F2] py-14 sm:py-20 relative overflow-hidden"
+      >
+
         <div className="max-w-[1400px] mx-auto px-4 md:px-8 relative z-10">
-          <div className="text-center mb-10 sm:mb-12 space-y-2">
-            <h2 className="text-2xl sm:text-3xl font-bold text-[#0C4A6E]">Herramientas para tu mente</h2>
-            <p className="text-sm sm:text-base text-gray-600">Tecnología humana diseñada para apoyarte en cada paso.</p>
+
+          <div className="text-center mb-12 space-y-2">
+
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#0C4A6E]">
+              Herramientas para tu mente
+            </h2>
+
+            <p className="text-sm sm:text-base text-gray-600">
+              Tecnología humana diseñada para apoyarte en cada paso.
+            </p>
+
           </div>
+
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-            <div className="bg-white border border-gray-200 rounded-xl p-6 flex flex-col items-center text-center space-y-4 transition-all hover:shadow-xl hover:-translate-y-1.5 hover:border-sky-200">
+
+            {/* TARJETA: CHATBOT */}
+
+            <div className="bg-white border border-gray-200 rounded-2xl p-7 flex flex-col items-center text-center space-y-4 transition-all hover:shadow-xl hover:-translate-y-1.5 hover:border-sky-200">
+
               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-sky-100 to-sky-200 flex items-center justify-center text-[#0369A1]">
+
                 <Bot size={32} />
+
               </div>
-              <h3 className="text-xl font-bold text-[#0C4A6E]">Chatbot de IA</h3>
+
+              <h3 className="text-xl font-bold text-[#0C4A6E]">
+                Chatbot de IA
+              </h3>
+
               <p className="text-gray-600">
-                Un compañero empático disponible 24/7 para escucharte y guiarte con técnicas de terapia breve.
+                Un compañero empático disponible 24/7 para escucharte y
+                orientarte cuando necesites apoyo emocional.
               </p>
-              <a className="pt-2 text-sm text-[#0369A1] flex items-center gap-1 hover:underline" href="#">
-                Saber más <ArrowUpRight size={16} />
-              </a>
+
+
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-xl p-6 flex flex-col items-center text-center space-y-4 transition-all hover:shadow-xl hover:-translate-y-1.5 hover:border-sky-200">
+
+            {/* TARJETA: TEST EMOCIONAL */}
+
+            <div className="bg-white border border-gray-200 rounded-2xl p-7 flex flex-col items-center text-center space-y-4 transition-all hover:shadow-xl hover:-translate-y-1.5 hover:border-sky-200">
+
               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-sky-100 to-sky-200 flex items-center justify-center text-[#0C4A6E]">
+
                 <Heart size={32} />
+
               </div>
-              <h3 className="text-xl font-bold text-[#0C4A6E]">Test Emocional</h3>
+
+              <h3 className="text-xl font-bold text-[#0C4A6E]">
+                Test Emocional
+              </h3>
+
               <p className="text-gray-600">
-                Evaluaciones clínicas rápidas para entender mejor tu estado actual y recibir recomendaciones personalizadas.
+                Conoce mejor cómo te sientes mediante una evaluación
+                orientativa y descubre recursos que pueden ayudarte.
               </p>
-              <a className="pt-2 text-sm text-[#0369A1] flex items-center gap-1 hover:underline" href="#">
-                Saber más <ArrowUpRight size={16} />
-              </a>
+
+              <Link
+                to="/test-bienestar"
+                className="pt-2 text-sm text-[#0369A1] flex items-center gap-1 hover:underline"
+              >
+                Realizar test
+                <ArrowUpRight size={16} />
+              </Link>
+
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-xl p-6 flex flex-col items-center text-center space-y-4 transition-all hover:shadow-xl hover:-translate-y-1.5 hover:border-sky-200">
+
+            {/* TARJETA: SEGUIMIENTO DE ÁNIMO */}
+
+            <div className="bg-white border border-gray-200 rounded-2xl p-7 flex flex-col items-center text-center space-y-4 transition-all hover:shadow-xl hover:-translate-y-1.5 hover:border-sky-200">
+
               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-sky-100 to-sky-200 flex items-center justify-center text-[#0369A1]">
+
                 <Activity size={32} />
+
               </div>
-              <h3 className="text-xl font-bold text-[#0C4A6E]">Seguimiento de Ánimo</h3>
+
+              <h3 className="text-xl font-bold text-[#0C4A6E]">
+                Seguimiento de Ánimo
+              </h3>
+
               <p className="text-gray-600">
-                Registra tus emociones diarias y visualiza patrones para mejorar tu autoconocimiento a largo plazo.
+                Registra tus emociones y observa tus cambios para mejorar
+                tu autoconocimiento.
               </p>
-              <a className="pt-2 text-sm text-[#0369A1] flex items-center gap-1 hover:underline" href="#">
-                Saber más <ArrowUpRight size={16} />
+
+              {/* Mismo caso que "Saber más" arriba: href="#" sin destino real */}
+              <a
+                href="#"
+                className="pt-2 text-sm text-[#0369A1] flex items-center gap-1 hover:underline"
+              >
+                
               </a>
+
             </div>
+
           </div>
+
         </div>
+
       </section>
 
-      <section className="bg-gradient-to-br from-[#0369A1] to-[#0C4A6E] text-white py-12">
+
+      {/* ================================
+          ESTADÍSTICAS
+          Banda con tres métricas destacadas (usuarios, valoración, soporte).
+          NOTA: los valores (+50k, 4.9/5, 24/7) están fijos ("hardcodeados").
+          Si en el futuro se vuelven dinámicos (ej. desde una API/base de
+          datos), conviene extraerlos a variables o props.
+      ================================= */}
+      <section className="bg-gradient-to-br from-[#0369A1] to-[#0C4A6E] text-white py-14">
+
         <div className="max-w-[1400px] mx-auto px-4 md:px-8">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-10 text-center">
-            <div className="space-y-1">
-              <div className="text-4xl font-bold text-sky-200">+50k</div>
-              <p className="text-sm uppercase tracking-widest text-sky-100/80">usuarios activos</p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
+
+            <div>
+              <div className="text-4xl font-bold text-sky-200">
+                +50k
+              </div>
+
+              <p className="mt-1 text-sm uppercase tracking-widest text-sky-100/80">
+                usuarios activos
+              </p>
             </div>
-            <div className="space-y-1">
-              <div className="text-4xl font-bold text-sky-200">4.9/5</div>
-              <p className="text-sm uppercase tracking-widest text-sky-100/80">valoración media</p>
+
+
+            <div>
+              <div className="text-4xl font-bold text-sky-200">
+                4.9/5
+              </div>
+
+              <p className="mt-1 text-sm uppercase tracking-widest text-sky-100/80">
+                valoración media
+              </p>
             </div>
-            <div className="space-y-1">
-              <div className="text-4xl font-bold text-sky-200">24/7</div>
-              <p className="text-sm uppercase tracking-widest text-sky-100/80">soporte disponible</p>
+
+
+            <div>
+              <div className="text-4xl font-bold text-sky-200">
+                24/7
+              </div>
+
+              <p className="mt-1 text-sm uppercase tracking-widest text-sky-100/80">
+                soporte disponible
+              </p>
             </div>
+
           </div>
+
         </div>
+
       </section>
 
-      <section className="bg-[#FAF7F2] py-10 sm:py-16 overflow-hidden relative">
+
+      {/* ================================
+          CTA FINAL
+      ================================= */}
+      <section
+        id="ayuda"
+        className="bg-[#FAF7F2] py-14 sm:py-20 overflow-hidden relative"
+      >
+
         <div className="max-w-[1400px] mx-auto px-4 md:px-8 relative z-10">
-          <div className="bg-white/70 backdrop-blur-md border border-gray-200 p-6 sm:p-10 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-8">
+
+          <div className="bg-white/80 backdrop-blur-md border border-gray-200 p-7 sm:p-10 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-7">
+
             <div className="space-y-2 text-center md:text-left">
-              <h2 className="text-xl sm:text-2xl font-bold text-[#0C4A6E]">¿Listo para transformar tu bienestar?</h2>
-              <p className="text-sm sm:text-base text-gray-600 max-w-lg">Únete a miles de personas que ya están cuidando su salud mental con DIAGNOHEALTH. Comienza tu prueba gratuita hoy mismo.</p>
+
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#0C4A6E]">
+                ¿Listo para transformar tu bienestar?
+              </h2>
+
+              <p className="text-sm sm:text-base text-gray-600 max-w-lg">
+                Comienza a conocer mejor tus emociones y encuentra
+                herramientas que pueden acompañarte en tu día a día.
+              </p>
+
             </div>
+
+
             <Link
               to="/registro"
-              className="w-full md:w-auto justify-center whitespace-nowrap px-8 sm:px-10 py-4 sm:py-5 rounded-full bg-gradient-to-br from-[#0369A1] to-[#0C4A6E] text-white text-base sm:text-lg font-bold shadow-lg active:scale-95 transition-all hover:shadow-xl flex items-center gap-2"
+              className="
+                whitespace-nowrap
+                px-8
+                py-4
+                rounded-full
+                bg-gradient-to-r
+                from-[#0369A1]
+                to-[#0C4A6E]
+                text-white
+                font-bold
+                shadow-lg
+                hover:shadow-xl
+                hover:-translate-y-0.5
+                transition-all
+                flex
+                items-center
+                gap-2
+              "
             >
+
               Empieza Gratis
+
               <ArrowRight size={20} />
+
             </Link>
+
           </div>
+
         </div>
-        <div className="absolute -right-20 -bottom-20 w-96 h-96 bg-sky-200/10 rounded-full blur-3xl"></div>
+
       </section>
 
+
+      {/* ================================
+          FOOTER
+      ================================= */}
       <footer className="bg-[#FAF7F2] border-t border-gray-200">
+
         <div className="flex flex-col md:flex-row justify-between items-center w-full px-4 md:px-8 py-8 max-w-[1400px] mx-auto">
+
           <div className="flex flex-col md:flex-row items-center gap-4 mb-4 md:mb-0">
-            <span className="text-xl font-bold text-[#0C4A6E]">DIAGNOHEALTH</span>
+
+            <span className="text-xl font-bold text-[#0C4A6E]">
+              DIAGNOHEALTH
+            </span>
+
             <p className="text-xs text-gray-500">
-              © 2024 DIAGNOHEALTH. Todos los derechos reservados.
+              © 2026 DIAGNOHEALTH. Todos los derechos reservados.
             </p>
+
           </div>
+
+
           <div className="flex flex-wrap justify-center gap-8">
-            <a className="text-xs text-gray-500 hover:text-[#0369A1] transition-colors" href="#">Privacidad</a>
-            <a className="text-xs text-gray-500 hover:text-[#0369A1] transition-colors" href="#">Términos</a>
-            <a className="text-xs text-gray-500 hover:text-[#0369A1] transition-colors" href="#">Contacto</a>
-            <a className="text-xs text-gray-500 hover:text-[#0369A1] transition-colors" href="#">Blog</a>
+
+            <a
+              href="#"
+              className="text-xs text-gray-500 hover:text-[#0369A1]"
+            >
+              Privacidad
+            </a>
+
+            <a
+              href="#"
+              className="text-xs text-gray-500 hover:text-[#0369A1]"
+            >
+              Términos
+            </a>
+
+            <a
+              href="#"
+              className="text-xs text-gray-500 hover:text-[#0369A1]"
+            >
+              Contacto
+            </a>
+
+            <a
+              href="#"
+              className="text-xs text-gray-500 hover:text-[#0369A1]"
+            >
+              Blog
+            </a>
+
           </div>
-          <div className="flex items-center gap-3 mt-4 md:mt-0">
-            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center hover:bg-sky-100 transition-colors cursor-pointer">
-              <Share2 size={18} />
+
+
+          <div className="flex items-center gap-3 mt-5 md:mt-0">
+
+            <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center hover:bg-sky-100 transition-colors cursor-pointer">
+
+              <Share2 size={17} />
+
             </div>
-            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center hover:bg-sky-100 transition-colors cursor-pointer">
-              <Globe size={18} />
+
+
+            <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center hover:bg-sky-100 transition-colors cursor-pointer">
+
+              <Globe size={17} />
+
             </div>
+
           </div>
+
         </div>
+
       </footer>
+
     </div>
   );
 }
