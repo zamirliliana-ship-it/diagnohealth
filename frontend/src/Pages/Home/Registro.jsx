@@ -20,16 +20,49 @@ function Registro() {
   });
 
   const [errorMensaje, setErrorMensaje] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
+
+  const CAMPOS_OBLIGATORIOS = [
+    { id: 'docType', label: 'Tipo de documento' },
+    { id: 'docNumber', label: 'Número de documento' },
+    { id: 'firstNames', label: 'Nombres' },
+    { id: 'lastNames', label: 'Apellidos' },
+    { id: 'email', label: 'Email' },
+    { id: 'phone', label: 'Teléfono' },
+    { id: 'gender', label: 'Sexo' },
+    { id: 'password', label: 'Contraseña' },
+  ];
 
   const handleChange = (e) => {
     const { id, value } = e.target;
     setFormData((prev) => ({ ...prev, [id]: value }));
+    if (fieldErrors[id]) {
+      setFieldErrors((prev) => ({ ...prev, [id]: undefined }));
+    }
+  };
+
+  const validarCampos = () => {
+    const errores = {};
+    CAMPOS_OBLIGATORIOS.forEach(({ id, label }) => {
+      if (!formData[id] || !formData[id].toString().trim()) {
+        errores[id] = `${label} es obligatorio.`;
+      }
+    });
+    return errores;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMensaje('');
+
+    const errores = validarCampos();
+    if (Object.keys(errores).length > 0) {
+      setFieldErrors(errores);
+      setErrorMensaje('Todos los campos son obligatorios. Por favor completa la información faltante.');
+      return;
+    }
+    setFieldErrors({});
 
     if (!PASSWORD_REGEX.test(formData.password)) {
       setErrorMensaje('La contraseña debe tener mínimo 8 caracteres e incluir letras, números y un carácter especial.');
@@ -123,7 +156,7 @@ function Registro() {
                     <label className="block text-sm font-medium text-[#0369A1] mb-2" htmlFor="docType">Tipo de documento</label>
                     <div className="relative">
                       <select
-                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-[#0369A1] outline-none text-sm text-gray-800 appearance-none"
+                        className={`w-full px-4 py-3 bg-white border rounded-lg focus:ring-2 focus:ring-sky-200 outline-none text-sm text-gray-800 appearance-none ${fieldErrors.docType ? 'border-red-400 focus:border-red-400' : 'border-gray-300 focus:border-[#0369A1]'}`}
                         id="docType"
                         value={formData.docType}
                         onChange={handleChange}
@@ -134,71 +167,77 @@ function Registro() {
                       </select>
                       <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                     </div>
+                    {fieldErrors.docType && <p className="mt-1 text-xs text-red-600">{fieldErrors.docType}</p>}
                   </div>
 
                   {/* Numero de documento */}
                   <div>
                     <label className="block text-sm font-medium text-[#0369A1] mb-2" htmlFor="docNumber">Número de documento</label>
                     <input
-                      className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-[#0369A1] outline-none text-sm text-gray-800 placeholder-gray-300"
+                      className={`w-full px-4 py-3 bg-white border rounded-lg focus:ring-2 focus:ring-sky-200 outline-none text-sm text-gray-800 placeholder-gray-300 ${fieldErrors.docNumber ? 'border-red-400 focus:border-red-400' : 'border-gray-300 focus:border-[#0369A1]'}`}
                       id="docNumber"
                       placeholder="Ej. 123456789"
                       type="text"
                       value={formData.docNumber}
                       onChange={handleChange}
                     />
+                    {fieldErrors.docNumber && <p className="mt-1 text-xs text-red-600">{fieldErrors.docNumber}</p>}
                   </div>
 
                   {/* Nombres */}
                   <div>
                     <label className="block text-sm font-medium text-[#0369A1] mb-2" htmlFor="firstNames">Nombres</label>
                     <input
-                      className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-[#0369A1] outline-none text-sm text-gray-800 placeholder-gray-300"
+                      className={`w-full px-4 py-3 bg-white border rounded-lg focus:ring-2 focus:ring-sky-200 outline-none text-sm text-gray-800 placeholder-gray-300 ${fieldErrors.firstNames ? 'border-red-400 focus:border-red-400' : 'border-gray-300 focus:border-[#0369A1]'}`}
                       id="firstNames"
                       placeholder="Tus nombres"
                       type="text"
                       value={formData.firstNames}
                       onChange={handleChange}
                     />
+                    {fieldErrors.firstNames && <p className="mt-1 text-xs text-red-600">{fieldErrors.firstNames}</p>}
                   </div>
 
                   {/* Apellidos */}
                   <div>
                     <label className="block text-sm font-medium text-[#0369A1] mb-2" htmlFor="lastNames">Apellidos</label>
                     <input
-                      className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-[#0369A1] outline-none text-sm text-gray-800 placeholder-gray-300"
+                      className={`w-full px-4 py-3 bg-white border rounded-lg focus:ring-2 focus:ring-sky-200 outline-none text-sm text-gray-800 placeholder-gray-300 ${fieldErrors.lastNames ? 'border-red-400 focus:border-red-400' : 'border-gray-300 focus:border-[#0369A1]'}`}
                       id="lastNames"
                       placeholder="Tus apellidos"
                       type="text"
                       value={formData.lastNames}
                       onChange={handleChange}
                     />
+                    {fieldErrors.lastNames && <p className="mt-1 text-xs text-red-600">{fieldErrors.lastNames}</p>}
                   </div>
 
                   {/* Email (Full width on md+) */}
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-[#0369A1] mb-2" htmlFor="email">Email</label>
                     <input
-                      className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-[#0369A1] outline-none text-sm text-gray-800 placeholder-gray-300"
+                      className={`w-full px-4 py-3 bg-white border rounded-lg focus:ring-2 focus:ring-sky-200 outline-none text-sm text-gray-800 placeholder-gray-300 ${fieldErrors.email ? 'border-red-400 focus:border-red-400' : 'border-gray-300 focus:border-[#0369A1]'}`}
                       id="email"
                       placeholder="nombre@ejemplo.com"
                       type="email"
                       value={formData.email}
                       onChange={handleChange}
                     />
+                    {fieldErrors.email && <p className="mt-1 text-xs text-red-600">{fieldErrors.email}</p>}
                   </div>
 
                   {/* Teléfono */}
                   <div>
                     <label className="block text-sm font-medium text-[#0369A1] mb-2" htmlFor="phone">Teléfono</label>
                     <input
-                      className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-[#0369A1] outline-none text-sm text-gray-800 placeholder-gray-300"
+                      className={`w-full px-4 py-3 bg-white border rounded-lg focus:ring-2 focus:ring-sky-200 outline-none text-sm text-gray-800 placeholder-gray-300 ${fieldErrors.phone ? 'border-red-400 focus:border-red-400' : 'border-gray-300 focus:border-[#0369A1]'}`}
                       id="phone"
                       placeholder="300 000 0000"
                       type="tel"
                       value={formData.phone}
                       onChange={handleChange}
                     />
+                    {fieldErrors.phone && <p className="mt-1 text-xs text-red-600">{fieldErrors.phone}</p>}
                   </div>
 
                   {/* Sexo */}
@@ -206,7 +245,7 @@ function Registro() {
                     <label className="block text-sm font-medium text-[#0369A1] mb-2" htmlFor="gender">Sexo</label>
                     <div className="relative">
                       <select
-                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-[#0369A1] outline-none text-sm text-gray-800 appearance-none"
+                        className={`w-full px-4 py-3 bg-white border rounded-lg focus:ring-2 focus:ring-sky-200 outline-none text-sm text-gray-800 appearance-none ${fieldErrors.gender ? 'border-red-400 focus:border-red-400' : 'border-gray-300 focus:border-[#0369A1]'}`}
                         id="gender"
                         value={formData.gender}
                         onChange={handleChange}
@@ -218,22 +257,27 @@ function Registro() {
                       </select>
                       <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                     </div>
+                    {fieldErrors.gender && <p className="mt-1 text-xs text-red-600">{fieldErrors.gender}</p>}
                   </div>
 
                   {/* Contraseña (Full width on md+) */}
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-[#0369A1] mb-2" htmlFor="password">Contraseña</label>
                     <input
-                      className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-[#0369A1] outline-none text-sm text-gray-800 placeholder-gray-300"
+                      className={`w-full px-4 py-3 bg-white border rounded-lg focus:ring-2 focus:ring-sky-200 outline-none text-sm text-gray-800 placeholder-gray-300 ${fieldErrors.password ? 'border-red-400 focus:border-red-400' : 'border-gray-300 focus:border-[#0369A1]'}`}
                       id="password"
                       placeholder="Crea una contraseña segura"
                       type="password"
                       value={formData.password}
                       onChange={handleChange}
                     />
-                    <p className="mt-2 text-xs text-gray-500">
-                      Mínimo 8 caracteres, con letras, números y un carácter especial.
-                    </p>
+                    {fieldErrors.password ? (
+                      <p className="mt-1 text-xs text-red-600">{fieldErrors.password}</p>
+                    ) : (
+                      <p className="mt-2 text-xs text-gray-500">
+                        Mínimo 8 caracteres, con letras, números y un carácter especial.
+                      </p>
+                    )}
                   </div>
                 </div>
 
