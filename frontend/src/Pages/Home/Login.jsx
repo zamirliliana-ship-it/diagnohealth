@@ -1,18 +1,101 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Activity, ArrowLeft } from 'lucide-react';
 import { supabase } from '../../config/supabase';
+
+const MAX_INTENTOS = 3;
+const BLOQUEO_MS = 5 * 60 * 1000; // 5 minutos
+const STORAGE_KEY = 'diagnohealth_login_intentos';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMensaje, setErrorMensaje] = useState('');
   const [loading, setLoading] = useState(false);
-  
+  const [bloqueadoHasta, setBloqueadoHasta] = useState(null);
+  const [tiempoRestante, setTiempoRestante] = useState(0);
+
   const navigate = useNavigate();
+  const intervaloRef = useRef(null);
+
+  // Al montar, revisa si ya existe un bloqueo vigente guardado
+  useEffect(() => {
+    const guardado = leerEstadoIntentos();
+    if (guardado.bloqueadoHasta && guardado.bloqueadoHasta > Date.now()) {
+      setBloqueadoHasta(guardado.bloqueadoHasta);
+    }
+  }, []);
+
+  // Cuenta regresiva mientras esté bloqueado
+  useEffect(() => {
+    if (!bloqueadoHasta) {
+      setTiempoRestante(0);
+      return;
+    }
+
+    const actualizar = () => {
+      const restante = bloqueadoHasta - Date.now();
+      if (restante <= 0) {
+        // Se acabó el bloqueo: reinicia todo
+        limpiarEstadoIntentos();
+        setBloqueadoHasta(null);
+        setTiempoRestante(0);
+        setErrorMensaje('');
+        clearInterval(intervaloRef.current);
+      } else {
+        setTiempoRestante(restante);
+      }
+    };
+
+    actualizar();
+    intervaloRef.current = setInterval(actualizar, 1000);
+    return () => clearInterval(intervaloRef.current);
+  }, [bloqueadoHasta]);
+
+  const leerEstadoIntentos = () => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : { intentos: 0, bloqueadoHasta: null };
+    } catch {
+      return { intentos: 0, bloqueadoHasta: null };
+    }
+  };
+
+  const guardarEstadoIntentos = (estado) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(estado));
+  };
+
+  const limpiarEstadoIntentos = () => {
+    localStorage.removeItem(STORAGE_KEY);
+  };
+
+  const registrarIntentoFallido = () => {
+    const estado = leerEstadoIntentos();
+    const nuevosIntentos = estado.intentos + 1;
+
+    if (nuevosIntentos >= MAX_INTENTOS) {
+      const hasta = Date.now() + BLOQUEO_MS;
+      guardarEstadoIntentos({ intentos: 0, bloqueadoHasta: hasta });
+      setBloqueadoHasta(hasta);
+    } else {
+      guardarEstadoIntentos({ intentos: nuevosIntentos, bloqueadoHasta: null });
+    }
+  };
+
+  const formatearTiempo = (ms) => {
+    const totalSegundos = Math.ceil(ms / 1000);
+    const minutos = Math.floor(totalSegundos / 60);
+    const segundos = totalSegundos % 60;
+    return `${minutos}:${segundos.toString().padStart(2, '0')}`;
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
+
+    if (bloqueadoHasta && bloqueadoHasta > Date.now()) {
+      return; // Seguridad extra: no procesa si está bloqueado
+    }
+
     setErrorMensaje('');
     setLoading(true);
 
@@ -23,13 +106,20 @@ export default function Login() {
       });
 
       if (error) {
-        setErrorMensaje('Correo o contraseña incorrectos. Verifica tus datos.');
+        registrarIntentoFallido();
+        const estadoActualizado = leerEstadoIntentos();
+
+        if (estadoActualizado.bloqueadoHasta) {
+          setErrorMensaje('Demasiados intentos fallidos. Inténtalo de nuevo en 5 minutos.');
+        } else {
+          setErrorMensaje('Correo o contraseña incorrectos. Verifica tus datos.');
+        }
         setLoading(false);
         return;
       }
 
       if (data.user) {
-        // Redirige directamente al panel del usuario al iniciar sesión
+        limpiarEstadoIntentos();
         navigate('/inicioS', { replace: true });
       }
     } catch (err) {
@@ -38,6 +128,8 @@ export default function Login() {
       setLoading(false);
     }
   };
+
+  const estaBloqueado = !!bloqueadoHasta && bloqueadoHasta > Date.now();
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#FAF7F2]">
@@ -80,48 +172,57 @@ export default function Login() {
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Correo electrónico
-              </label>
-              <input 
-                type="email" 
-                placeholder="ejemplo@correo.com" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required 
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 focus:border-[#0C4A6E] focus:outline-none focus:ring-1 focus:ring-[#0C4A6E]"
-              />
+          {estaBloqueado && (
+            <div role="alert" className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-3 text-center text-sm font-medium text-amber-800">
+              Cuenta bloqueada temporalmente.<br />
+              Vuelve a intentarlo en {formatearTiempo(tiempoRestante)}
             </div>
-            
-            <div>
-              <div className="mb-1 flex items-center justify-between">
-                <label className="block text-sm font-medium text-gray-700">
-                  Contraseña
-                </label>
-                <Link to="/recuperar-password" className="text-xs font-medium text-[#0C4A6E] hover:underline">
-                  ¿Olvidaste tu contraseña?
-                </Link>
-              </div>
-              <input 
-                type="password" 
-                placeholder="••••••••" 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required 
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 focus:border-[#0C4A6E] focus:outline-none focus:ring-1 focus:ring-[#0C4A6E]"
-              />
-            </div>
+          )}
 
-            <button 
-              type="submit" 
-              disabled={loading}
-              className="mt-6 flex w-full items-center justify-center rounded-lg bg-[#0C4A6E] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#073654] disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {loading ? "Iniciando sesión..." : "Iniciar sesión"}
-            </button>
-          </form>
+          <fieldset disabled={estaBloqueado || loading} className="space-y-5">
+            <form onSubmit={handleLogin} className="space-y-5">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Correo electrónico
+                </label>
+                <input 
+                  type="email" 
+                  placeholder="ejemplo@correo.com" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required 
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 focus:border-[#0C4A6E] focus:outline-none focus:ring-1 focus:ring-[#0C4A6E] disabled:bg-gray-100 disabled:text-gray-400"
+                />
+              </div>
+              
+              <div>
+                <div className="mb-1 flex items-center justify-between">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Contraseña
+                  </label>
+                  <Link to="/recuperar-password" className="text-xs font-medium text-[#0C4A6E] hover:underline">
+                    ¿Olvidaste tu contraseña?
+                  </Link>
+                </div>
+                <input 
+                  type="password" 
+                  placeholder="••••••••" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required 
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 focus:border-[#0C4A6E] focus:outline-none focus:ring-1 focus:ring-[#0C4A6E] disabled:bg-gray-100 disabled:text-gray-400"
+                />
+              </div>
+
+              <button 
+                type="submit" 
+                disabled={loading || estaBloqueado}
+                className="mt-6 flex w-full items-center justify-center rounded-lg bg-[#0C4A6E] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#073654] disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {estaBloqueado ? "Bloqueado" : loading ? "Iniciando sesión..." : "Iniciar sesión"}
+              </button>
+            </form>
+          </fieldset>
 
           <div className="mt-8 text-center text-sm text-gray-600">
             ¿No tienes cuenta?{' '}

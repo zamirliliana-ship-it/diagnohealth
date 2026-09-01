@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Brain, ArrowLeft, ChevronDown } from 'lucide-react';
 import { supabase } from '../../config/supabase';
 
+const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+
 function Registro() {
   const navigate = useNavigate();
 
@@ -28,6 +30,12 @@ function Registro() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMensaje('');
+
+    if (!PASSWORD_REGEX.test(formData.password)) {
+      setErrorMensaje('La contraseña debe tener mínimo 8 caracteres e incluir letras, números y un carácter especial.');
+      return;
+    }
+
     setLoading(true);
 
     const { data, error } = await supabase.auth.signUp({
@@ -223,6 +231,9 @@ function Registro() {
                       value={formData.password}
                       onChange={handleChange}
                     />
+                    <p className="mt-2 text-xs text-gray-500">
+                      Mínimo 8 caracteres, con letras, números y un carácter especial.
+                    </p>
                   </div>
                 </div>
 
