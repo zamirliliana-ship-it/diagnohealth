@@ -1,8 +1,392 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../../config/supabase";
 
+const AuthPortal = () => {
+  const [isRegister, setIsRegister] = useState(false);
+  const navigate = useNavigate();
+
+  // Estados para el Login
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+
+  // Estados para el Registro
+  const [fullName, setFullName] = useState("");
+  const [regEmail, setRegEmail] = useState("");
+  const [regPassword, setRegPassword] = useState("");
+  const [role, setRole] = useState("");
+
+  const toggleView = () => {
+    setIsRegister(!isRegister);
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: loginEmail,
+        password: loginPassword,
+      });
+
+      if (error) {
+        alert("Error al iniciar sesión: " + error.message);
+        return;
+      }
+
+      if (data && data.session) {
+        window.location.href = "/admin/admis";
+      }
+    } catch (err) {
+      console.error("Error inesperado en login:", err);
+    }
+  };
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: regEmail,
+        password: regPassword,
+        options: {
+          data: {
+            full_name: fullName,
+            role: role,
+          },
+        },
+      });
+
+      if (error) {
+        alert("Error al registrar administrador: " + error.message);
+        return;
+      }
+
+      alert("¡Administrador registrado con éxito! Ya puedes iniciar sesión.");
+      setIsRegister(false);
+    } catch (err) {
+      console.error("Error inesperado en registro:", err);
+    }
+  };
+
+  return (
+    <div className="bg-slate-50 min-h-screen flex items-center justify-center font-sans text-slate-800 antialiased">
+      <div className="w-full max-w-6xl mx-auto min-h-[650px] bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 m-4">
+        <div className="lg:col-span-5 relative bg-sky-950 text-white flex flex-col justify-between p-10 overflow-hidden">
+          <div className="absolute inset-0 z-0">
+            <img
+              src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1000&q=80"
+              alt="Médico analizando datos"
+              className="w-full h-full object-cover opacity-25"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-sky-950 via-sky-950/70 to-transparent"></div>
+          </div>
+
+          <div className="relative z-10 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-sky-600 flex items-center justify-center shadow-md">
+              <span className="material-symbols-outlined text-white">
+                medical_services
+              </span>
+            </div>
+            <span className="font-bold tracking-wider text-lg">
+              DIAGNOHEALTH
+            </span>
+          </div>
+
+          <div className="relative z-10 my-auto py-12">
+            <h2 className="text-3xl font-extrabold tracking-tight mb-4">
+              Gestión médica inteligente y segura.
+            </h2>
+            <p className="text-sky-200 text-sm leading-relaxed">
+              Plataforma centralizada de administración clínica, control de
+              pacientes y analíticas en tiempo real para optimizar la atención
+              de la salud mental.
+            </p>
+          </div>
+
+          <div className="relative z-10 text-xs text-sky-400">
+            &copy; 2026 DiagnoHealth Systems. Todos los derechos reservados.
+          </div>
+        </div>
+
+        <div className="lg:col-span-7 p-8 md:p-12 flex flex-col justify-center bg-white overflow-y-auto max-h-[85vh]">
+          {!isRegister ? (
+            <div className="w-full max-w-md mx-auto">
+              <div className="mb-8">
+                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                  Iniciar Sesión
+                </h1>
+                <p className="text-sm text-slate-500 mt-1">
+                  Ingresa tus credenciales para acceder al panel de
+                  administración.
+                </p>
+              </div>
+
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div>
+                  <label
+                    className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1"
+                    htmlFor="login-email"
+                  >
+                    Correo electrónico
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span className="material-symbols-outlined text-slate-400 text-sm">
+                        mail
+                      </span>
+                    </div>
+                    <input
+                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:bg-white transition-all"
+                      id="login-email"
+                      name="email"
+                      placeholder="admin@diagnohealth.com"
+                      required
+                      type="email"
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1"
+                    htmlFor="login-password"
+                  >
+                    Contraseña
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span className="material-symbols-outlined text-slate-400 text-sm">
+                        lock
+                      </span>
+                    </div>
+                    <input
+                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:bg-white transition-all"
+                      id="login-password"
+                      name="password"
+                      placeholder="••••••••"
+                      required
+                      type="password"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <button
+                  className="w-full py-2.5 bg-sky-900 hover:bg-sky-950 text-white font-medium text-sm rounded-lg transition-colors shadow-sm flex justify-center items-center gap-2 cursor-pointer mt-2"
+                  type="submit"
+                >
+                  <span>Iniciar Sesión</span>
+                  <span className="material-symbols-outlined text-sm">
+                    login
+                  </span>
+                </button>
+              </form>
+
+              <div className="mt-8 pt-6 border-t border-slate-100 text-center">
+                <p className="text-xs text-slate-500">
+                  ¿No tienes cuenta de administrador?{" "}
+                  <button
+                    onClick={toggleView}
+                    className="text-sky-700 font-semibold hover:underline cursor-pointer ml-1"
+                  >
+                    Regístrate aquí
+                  </button>
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="w-full max-w-lg mx-auto">
+              <div className="mb-6">
+                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                  Registro de Administrador
+                </h1>
+                <p className="text-sm text-slate-500 mt-1">
+                  Completa los datos para dar de alta un nuevo perfil con
+                  privilegios.
+                </p>
+              </div>
+
+              <form onSubmit={handleRegister} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1"
+                      htmlFor="fullName"
+                    >
+                      Nombre completo
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <span className="material-symbols-outlined text-slate-400 text-sm">
+                          person
+                        </span>
+                      </div>
+                      <input
+                        className="w-full pl-10 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:bg-white"
+                        id="fullName"
+                        name="fullName"
+                        placeholder="Ej. Carlos Pérez"
+                        required
+                        type="text"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label
+                      className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1"
+                      htmlFor="reg-email"
+                    >
+                      Correo electrónico
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <span className="material-symbols-outlined text-slate-400 text-sm">
+                          mail
+                        </span>
+                      </div>
+                      <input
+                        className="w-full pl-10 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:bg-white"
+                        id="reg-email"
+                        name="email"
+                        placeholder="correo@ejemplo.com"
+                        required
+                        type="email"
+                        value={regEmail}
+                        onChange={(e) => setRegEmail(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1"
+                      htmlFor="reg-password"
+                    >
+                      Contraseña
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <span className="material-symbols-outlined text-slate-400 text-sm">
+                          lock
+                        </span>
+                      </div>
+                      <input
+                        className="w-full pl-10 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:bg-white"
+                        id="reg-password"
+                        name="password"
+                        placeholder="••••••••"
+                        required
+                        type="password"
+                        value={regPassword}
+                        onChange={(e) => setRegPassword(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label
+                      className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1"
+                      htmlFor="role"
+                    >
+                      Rol asignado
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <span className="material-symbols-outlined text-slate-400 text-sm">
+                          badge
+                        </span>
+                      </div>
+                      <select
+                        className="w-full pl-10 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:bg-white appearance-none cursor-pointer"
+                        id="role"
+                        name="role"
+                        required
+                        value={role}
+                        onChange={(e) => setRole(e.target.value)}
+                      >
+                        <option disabled value="">
+                          Seleccionar Rol
+                        </option>
+                        <option value="super_admin">Super Admin</option>
+                        <option value="gestor_contenido">
+                          Gestor de Contenido
+                        </option>
+                        <option value="gestor_usuarios">
+                          Gestor de Usuarios
+                        </option>
+                        <option value="analista">Analista</option>
+                      </select>
+                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <span className="material-symbols-outlined text-slate-400 text-sm">
+                          expand_more
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1"
+                    htmlFor="createdAt"
+                  >
+                    Fecha de creación
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span className="material-symbols-outlined text-slate-400 text-sm">
+                        calendar_today
+                      </span>
+                    </div>
+                    <input
+                      className="w-full pl-10 pr-3 py-2 bg-slate-100 border border-slate-200 rounded-lg text-sm text-slate-500 cursor-not-allowed"
+                      id="createdAt"
+                      name="createdAt"
+                      readOnly
+                      type="date"
+                      defaultValue="2026-08-25"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    className="w-full py-2.5 bg-sky-900 hover:bg-sky-950 text-white font-medium text-sm rounded-lg transition-colors shadow-sm cursor-pointer"
+                    type="submit"
+                  >
+                    Registrar Administrador
+                  </button>
+                </div>
+              </form>
+
+              <div className="mt-6 pt-4 border-t border-slate-100 text-center">
+                <p className="text-xs text-slate-500">
+                  ¿Ya tienes cuenta?{" "}
+                  <button
+                    onClick={toggleView}
+                    className="text-sky-700 font-semibold hover:underline cursor-pointer ml-1"
+                  >
+                    Inicia sesión aquí
+                  </button>
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ==========================================
-// COMPONENTE PRINCIPAL
+// COMPONENTE PRINCIPAL DE APLICACIÓN
 // ==========================================
 const DiagnoHealthApp = () => {
   const [activeTab, setActiveTab] = useState("panel");
@@ -110,7 +494,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
 };
 
 // ==========================================
-// VISTA 1: PANEL (Dashboard 100% Real)
+// VISTA 1: PANEL (Dashboard conectado a 'usuarios')
 // ==========================================
 const DashboardView = ({ setActiveTab }) => {
   const [stats, setStats] = useState({
@@ -119,14 +503,15 @@ const DashboardView = ({ setActiveTab }) => {
     crises: 0,
     tests: 0,
   });
+
   const [recentPatients, setRecentPatients] = useState([]);
 
   const fetchDashboardData = async () => {
     try {
       const { count: userCount, data: usersData } = await supabase
-        .from("user")
-        .select("*", { count: "exact" })
-        .order("id_user", { ascending: false });
+        .from("usuarios")
+        .select("*")
+        .order("created_at", { ascending: false });
 
       if (usersData) {
         setRecentPatients(usersData.slice(0, 5));
@@ -148,7 +533,7 @@ const DashboardView = ({ setActiveTab }) => {
       .channel("dashboard-realtime")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "user" },
+        { event: "*", schema: "public", table: "usuarios" },
         fetchDashboardData,
       )
       .subscribe();
@@ -290,17 +675,19 @@ const DashboardView = ({ setActiveTab }) => {
           <tbody className="divide-y text-sm">
             {recentPatients.length > 0 ? (
               recentPatients.map((p) => (
-                <tr key={p.id_user} className="hover:bg-gray-50">
+                <tr key={p.id} className="hover:bg-gray-50">
                   <td className="px-6 py-3 font-bold text-gray-800">
-                    {p.name || "Sin nombre"}
+                    {p.nombres
+                      ? `${p.nombres} ${p.apellidos || ""}`
+                      : "Sin nombre"}
                   </td>
-                  <td className="px-6 py-3 text-gray-600">{p.email}</td>
+                  <td className="px-6 py-3 text-gray-600">{p.correo}</td>
                   <td className="px-6 py-3 text-gray-600">
-                    {p.phone || "N/A"}
+                    {p.telefono || "N/A"}
                   </td>
                   <td className="px-6 py-3 text-right">
                     <button
-                      onClick={() => alert(`Expediente de ${p.name}`)}
+                      onClick={() => alert(`Expediente de ${p.nombres}`)}
                       className="text-xs bg-sky-50 text-sky-700 px-3 py-1 rounded-lg border border-sky-200 cursor-pointer"
                     >
                       Expediente
@@ -326,7 +713,7 @@ const DashboardView = ({ setActiveTab }) => {
 };
 
 // ==========================================
-// VISTA 2: ESTADÍSTICAS (Dinámica y Conectada a Supabase)
+// VISTA 2: ESTADÍSTICAS (Conectada a 'usuarios')
 // ==========================================
 const StatisticsView = () => {
   const [totalUsers, setTotalUsers] = useState(0);
@@ -340,17 +727,14 @@ const StatisticsView = () => {
     const fetchRealStats = async () => {
       setLoading(true);
       try {
-        // 1. Obtener conteo real de usuarios
         const { count: usersCount } = await supabase
-          .from("user")
+          .from("usuarios")
           .select("*", { count: "exact", head: true });
 
-        // 2. Obtener conteo real de fuentes (archivos subidos)
         const { count: sourcesCount } = await supabase
           .from("sources")
           .select("*", { count: "exact", head: true });
 
-        // 3. Obtener conteo real de recursos terapéuticos
         const { count: resourcesCount } = await supabase
           .from("resources")
           .select("*", { count: "exact", head: true });
@@ -396,7 +780,6 @@ const StatisticsView = () => {
         </div>
       </header>
 
-      {/* Sub-pestañas de Estadísticas */}
       <div className="flex border-b border-gray-200 gap-8 text-sm font-semibold">
         <button
           onClick={() => setActiveSubTab("general")}
@@ -424,7 +807,6 @@ const StatisticsView = () => {
         </button>
       </div>
 
-      {/* Filtros de Fecha */}
       <div className="flex justify-between items-center">
         <div className="flex bg-white border rounded-lg p-1 shadow-sm text-xs">
           <button
@@ -448,7 +830,6 @@ const StatisticsView = () => {
         </div>
       </div>
 
-      {/* Tarjetas de Métricas Principales (Conectadas a BD) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white border border-[#E2D9CA] rounded-xl p-6 shadow-sm">
           <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
@@ -457,7 +838,9 @@ const StatisticsView = () => {
           <p className="text-3xl font-extrabold text-sky-950 mt-2">
             {loading ? "..." : totalUsers}
           </p>
-          <span className="text-xs text-gray-400 mt-1 block">Tabla: public.user</span>
+          <span className="text-xs text-gray-400 mt-1 block">
+            Tabla: public.usuarios
+          </span>
         </div>
 
         <div className="bg-white border border-[#E2D9CA] rounded-xl p-6 shadow-sm">
@@ -467,7 +850,9 @@ const StatisticsView = () => {
           <p className="text-3xl font-extrabold text-sky-950 mt-2">
             {loading ? "..." : totalSources}
           </p>
-          <span className="text-xs text-gray-400 mt-1 block">Tabla: public.sources</span>
+          <span className="text-xs text-gray-400 mt-1 block">
+            Tabla: public.sources
+          </span>
         </div>
 
         <div className="bg-white border border-[#E2D9CA] rounded-xl p-6 shadow-sm">
@@ -477,11 +862,12 @@ const StatisticsView = () => {
           <p className="text-3xl font-extrabold text-sky-950 mt-2">
             {loading ? "..." : totalResources}
           </p>
-          <span className="text-xs text-gray-400 mt-1 block">Tabla: public.resources</span>
+          <span className="text-xs text-gray-400 mt-1 block">
+            Tabla: public.resources
+          </span>
         </div>
       </div>
 
-      {/* Sección de Gráficas / Estado Dinámico */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-8 bg-white border border-[#E2D9CA] rounded-xl p-6 shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-start">
@@ -503,7 +889,8 @@ const StatisticsView = () => {
           <div className="h-48 w-full mt-6 flex items-center justify-center border-b pb-2 px-4">
             {totalUsers === 0 && totalSources === 0 ? (
               <div className="text-center text-gray-400 text-sm">
-                Sin registros en la base de datos (0 en Supabase). Comienza agregando usuarios o archivos.
+                Sin registros en la base de datos (0 en Supabase). Comienza
+                agregando usuarios o archivos.
               </div>
             ) : (
               <div className="text-center text-sky-900 font-medium text-sm">
@@ -522,14 +909,13 @@ const StatisticsView = () => {
           </div>
         </div>
 
-        {/* Tarjeta de Resumen */}
         <div className="lg:col-span-4 bg-sky-950 text-white rounded-xl p-6 shadow-sm flex flex-col justify-between">
           <div>
             <h3 className="text-xs uppercase tracking-wider text-sky-300 font-semibold">
               Estado del Sistema
             </h3>
             <p className="text-4xl font-extrabold mt-3">
-              {totalUsers > 0 ? "Activo" / "Conectado" : "Sin Datos"}
+              {totalUsers > 0 ? "Activo" : "Sin Datos"}
             </p>
             <p className="text-xs text-sky-300 mt-2">
               Base de datos en producción lista.
@@ -538,12 +924,14 @@ const StatisticsView = () => {
           <div className="space-y-2 mt-6">
             <div className="flex justify-between text-xs text-sky-200">
               <span>Registros Totales</span>
-              <span className="text-emerald-400 font-bold">{totalUsers + totalSources + totalResources}</span>
+              <span className="text-emerald-400 font-bold">
+                {totalUsers + totalSources + totalResources}
+              </span>
             </div>
             <div className="h-2 w-full bg-sky-900 rounded-full overflow-hidden">
               <div
                 className="h-full bg-sky-400 rounded-full"
-                style={{ width: totalUsers > 0 ? "100% " : "0%" }}
+                style={{ width: totalUsers > 0 ? "100%" : "0%" }}
               ></div>
             </div>
           </div>
@@ -554,7 +942,7 @@ const StatisticsView = () => {
 };
 
 // ==========================================
-// VISTA 3: PACIENTES
+// VISTA 3: PACIENTES (Conectada a 'usuarios')
 // ==========================================
 const PatientsView = () => {
   const [patients, setPatients] = useState([]);
@@ -563,9 +951,9 @@ const PatientsView = () => {
 
   const fetchPatients = async () => {
     const { data } = await supabase
-      .from("user")
+      .from("usuarios")
       .select("*")
-      .order("id_user", { ascending: false });
+      .order("created_at", { ascending: false });
     if (data) setPatients(data);
   };
 
@@ -575,7 +963,7 @@ const PatientsView = () => {
       .channel("patients-dir")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "user" },
+        { event: "*", schema: "public", table: "usuarios" },
         fetchPatients,
       )
       .subscribe();
@@ -586,14 +974,15 @@ const PatientsView = () => {
 
   const handleDelete = async (id) => {
     if (!confirm("¿Deseas eliminar este usuario?")) return;
-    await supabase.from("user").delete().eq("id_user", id);
+    await supabase.from("usuarios").delete().eq("id", id);
     fetchPatients();
   };
 
   const filtered = patients.filter((p) => {
+    const fullName = `${p.nombres || ""} ${p.apellidos || ""}`.toLowerCase();
     const matchText =
-      (p.name && p.name.toLowerCase().includes(busqueda.toLowerCase())) ||
-      (p.email && p.email.toLowerCase().includes(busqueda.toLowerCase()));
+      fullName.includes(busqueda.toLowerCase()) ||
+      (p.correo && p.correo.toLowerCase().includes(busqueda.toLowerCase()));
 
     const matchEstado =
       filtroEstado === "Todos" || p.emotional_state === filtroEstado;
@@ -726,8 +1115,8 @@ const PatientsView = () => {
           <tbody className="divide-y text-sm text-gray-600">
             {filtered.length > 0 ? (
               filtered.map((p) => {
-                const initials = p.name
-                  ? p.name
+                const initials = p.nombres
+                  ? p.nombres
                       .split(" ")
                       .map((n) => n[0])
                       .join("")
@@ -744,7 +1133,7 @@ const PatientsView = () => {
 
                 return (
                   <tr
-                    key={p.id_user}
+                    key={p.id}
                     className="hover:bg-gray-50/80 transition-colors"
                   >
                     <td className="px-6 py-4 flex items-center gap-3">
@@ -752,10 +1141,10 @@ const PatientsView = () => {
                         {initials}
                       </div>
                       <span className="font-bold text-slate-800">
-                        {p.name || "Sin nombre"}
+                        {p.nombres} {p.apellidos || ""}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-gray-500">{p.email}</td>
+                    <td className="px-6 py-4 text-gray-500">{p.correo}</td>
                     <td className="px-6 py-4 text-xs text-gray-500">N/A</td>
                     <td className="px-6 py-4">
                       <span
@@ -771,7 +1160,7 @@ const PatientsView = () => {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <button
-                        onClick={() => handleDelete(p.id_user)}
+                        onClick={() => handleDelete(p.id)}
                         title="Eliminar paciente"
                         className="text-gray-400 hover:text-red-600 transition-colors cursor-pointer p-1 rounded-lg hover:bg-red-50"
                       >
@@ -813,12 +1202,13 @@ const PatientsView = () => {
 };
 
 // ==========================================
-// VISTA 4: FUENTES (Subida de Archivos Reales)
+// VISTA 4: FUENTES (Subida de Archivos, Icono y Vista Previa)
 // ==========================================
 const SourcesView = () => {
   const [sources, setSources] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [previewFile, setPreviewFile] = useState(null);
 
   const fetchSources = async () => {
     const { data } = await supabase
@@ -858,22 +1248,25 @@ const SourcesView = () => {
 
     setUploading(true);
     try {
-      const fileName = `${Date.now()}_${selectedFile.name}`;
+      const limpiarNombre = (nombre) =>
+        nombre
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-zA-Z0-9.\-_]/g, "_");
 
-      // 1. Subir archivo al Storage de Supabase (asegúrate de tener un bucket llamado 'sources' o 'documentos')
+      const fileName = `${Date.now()}_${limpiarNombre(selectedFile.name)}`;
+
       const { data: storageData, error: storageError } = await supabase.storage
         .from("sources")
         .upload(fileName, selectedFile);
 
       if (storageError) throw storageError;
 
-      // 2. Obtener extensión para el tipo
       const type = selectedFile.name.split(".").pop().toUpperCase() || "PDF";
 
-      // 3. Guardar el registro en la tabla 'sources' de la base de datos
       const { error: dbError } = await supabase
         .from("sources")
-        .insert([{ name: selectedFile.name, type }]);
+        .insert([{ name: fileName, type }]);
 
       if (dbError) throw dbError;
 
@@ -891,10 +1284,20 @@ const SourcesView = () => {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, fileName) => {
     if (!confirm("¿Deseas eliminar esta guía clínica?")) return;
+
+    await supabase.storage.from("sources").remove([fileName]);
     await supabase.from("sources").delete().eq("id", id);
     fetchSources();
+  };
+
+  const handlePreview = (fileName) => {
+    const { data } = supabase.storage.from("sources").getPublicUrl(fileName);
+
+    if (data && data.publicUrl) {
+      setPreviewFile({ name: fileName, url: data.publicUrl });
+    }
   };
 
   return (
@@ -953,23 +1356,39 @@ const SourcesView = () => {
             {sources.length > 0 ? (
               sources.map((s) => (
                 <tr key={s.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 font-medium text-gray-800">
-                    {s.name}
+                  <td className="px-6 py-4 font-medium text-gray-800 flex items-center gap-3">
+                    <span className="material-symbols-outlined text-sky-600 text-[22px]">
+                      description
+                    </span>
+                    <span className="truncate max-w-md" title={s.name}>
+                      {s.name}
+                    </span>
                   </td>
                   <td className="px-6 py-4">
                     <span className="px-3 py-1 rounded-full bg-sky-100 text-sky-800 text-xs font-semibold">
                       {s.type}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-6 py-4 text-right space-x-2">
                     <button
-                      onClick={() => handleDelete(s.id)}
-                      className="text-red-500 hover:text-red-700 cursor-pointer"
+                      onClick={() => handlePreview(s.name)}
+                      className="text-sky-600 hover:text-sky-800 cursor-pointer inline-flex items-center gap-1 bg-sky-50 px-3 py-1 rounded-lg text-xs font-semibold border border-sky-200"
+                      title="Vista previa"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">
+                        visibility
+                      </span>
+                      Vista previa
+                    </button>
+                    <button
+                      onClick={() => handleDelete(s.id, s.name)}
+                      className="text-red-500 hover:text-red-700 cursor-pointer inline-flex items-center gap-1 bg-red-50 px-3 py-1 rounded-lg text-xs font-semibold border border-red-200"
                       title="Eliminar fuente"
                     >
-                      <span className="material-symbols-outlined text-[20px]">
+                      <span className="material-symbols-outlined text-[16px]">
                         delete
                       </span>
+                      Eliminar
                     </button>
                   </td>
                 </tr>
@@ -987,6 +1406,49 @@ const SourcesView = () => {
           </tbody>
         </table>
       </div>
+
+      {previewFile && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-xl max-w-4xl w-full h-[80vh] flex flex-col shadow-2xl overflow-hidden">
+            <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+              <h3 className="font-bold text-sky-950 text-base truncate">
+                Vista previa: {previewFile.name}
+              </h3>
+              <button
+                onClick={() => setPreviewFile(null)}
+                className="text-gray-400 hover:text-gray-700 font-bold text-lg cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="flex-1 bg-gray-100 p-4 flex items-center justify-center overflow-hidden">
+              {previewFile.name.toLowerCase().endsWith(".pdf") ? (
+                <iframe
+                  src={previewFile.url}
+                  className="w-full h-full rounded-lg border bg-white"
+                  title="Vista previa PDF"
+                />
+              ) : (
+                <div className="text-center p-6 space-y-4">
+                  <p className="text-sm text-gray-600">
+                    Este tipo de archivo no cuenta con previsualización directa
+                    en el navegador, pero puedes descargarlo o abrirlo
+                    directamente.
+                  </p>
+                  <a
+                    href={previewFile.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block bg-sky-600 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-sky-700"
+                  >
+                    Abrir en nueva pestaña
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 };
@@ -1085,7 +1547,7 @@ const ResourcesView = () => {
             onClick={() => setShowModal(true)}
             className="bg-[#0369A1] hover:bg-sky-800 text-white px-5 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all active:scale-95 cursor-pointer shadow-sm"
           >
-            <span className="material-symbols-outlined text-sm">add</span>+
+            <span className="material-symbols-outlined text-sm">add</span>
             Nuevo recurso
           </button>
         </div>
@@ -1293,27 +1755,4 @@ const ResourcesView = () => {
     </main>
   );
 };
-
-// ==========================================
-// VISTAS ADICIONALES
-// ==========================================
-const RolesView = () => (
-  <main className="flex-1 p-8">
-    <h2 className="text-xl font-bold text-sky-950">
-      Gestión de Roles y Permisos
-    </h2>
-    <p className="text-sm text-gray-500 mt-2">
-      Módulo configurado para control de accesos.
-    </p>
-  </main>
-);
-const DomainsView = () => (
-  <main className="flex-1 p-8">
-    <h2 className="text-xl font-bold text-sky-900">Gestión de Dominios</h2>
-    <p className="text-sm text-gray-500 mt-2">
-      Módulo configurado para dominios autorizados.
-    </p>
-  </main>
-);
-
 export default DiagnoHealthApp;
