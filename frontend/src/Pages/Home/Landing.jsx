@@ -151,11 +151,11 @@ function Landing() {
           {/* BOTONES (sesión / registro / hamburguesa) */}
           <div className="flex items-center gap-2 sm:gap-3">
 
-            <Link
-              to="/inicioS"
-              className="hidden md:block px-5 lg:px-6 py-2.5 rounded-xl border border-[#0369A1]/30 text-[#0C4A6E] text-sm font-semibold hover:bg-sky-50 transition-all"
-            >
-              Iniciar sesión
+           <Link
+           to="/login"   // ✅ antes decía "/inicioS"
+            className="hidden md:block px-5 lg:px-6 py-2.5 rounded-xl border border-[#0369A1]/30 text-[#0C4A6E] text-sm font-semibold hover:bg-sky-50 transition-all"
+          >
+             Iniciar sesión
             </Link>
 
             <Link
