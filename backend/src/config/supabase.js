@@ -10,6 +10,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error("Faltan SUPABASE_URL y SUPABASE_ANON_KEY en backend/.env");
 }
 
+// Exportación por defecto para el servidor de Node
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default supabase;
