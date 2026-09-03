@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, UserPlus, Home, Heart, AlertTriangle, ShieldCheck, Smile, BarChart2, Printer, Phone } from 'lucide-react';
+import { ArrowLeft, UserPlus, Home, Heart, AlertTriangle, ShieldCheck, Smile, BarChart2, Printer, Phone, ClipboardList, Clock, Lock, Play } from 'lucide-react';
 import { supabase } from '../../config/supabase';
 
 const PREGUNTAS = [
@@ -53,11 +53,62 @@ const PREGUNTAS = [
       { valor: 'fatiga', peso: 2, etiqueta: "Bajo, me cuesta mucho" },
       { valor: 'tristeza', peso: 1, etiqueta: "Extremadamente agotado" }
     ]
+  },
+  {
+    id: 6,
+    texto: "¿Te ha costado concentrarte en tareas cotidianas, como leer, trabajar o ver televisión?",
+    opciones: [
+      { valor: 'apatia', peso: 1, etiqueta: "Ningún día" },
+      { valor: 'apatia', peso: 2, etiqueta: "Varios días" },
+      { valor: 'apatia', peso: 3, etiqueta: "Más de la mitad de los días" },
+      { valor: 'apatia', peso: 4, etiqueta: "Casi todos los días" }
+    ]
+  },
+  {
+    id: 7,
+    texto: "¿Has sentido que eres un fracaso o que has decepcionado a tu familia o a ti mismo?",
+    opciones: [
+      { valor: 'tristeza', peso: 1, etiqueta: "Ningún día" },
+      { valor: 'tristeza', peso: 2, etiqueta: "Varios días" },
+      { valor: 'tristeza', peso: 3, etiqueta: "Más de la mitad de los días" },
+      { valor: 'tristeza', peso: 4, etiqueta: "Casi todos los días" }
+    ]
+  },
+  {
+    id: 8,
+    texto: "¿Te has preocupado excesivamente por diferentes situaciones, sin poder controlarlo?",
+    opciones: [
+      { valor: 'ansiedad', peso: 1, etiqueta: "Ningún día" },
+      { valor: 'ansiedad', peso: 2, etiqueta: "Varios días" },
+      { valor: 'ansiedad', peso: 3, etiqueta: "Más de la mitad de los días" },
+      { valor: 'ansiedad', peso: 4, etiqueta: "Casi todos los días" }
+    ]
+  },
+  {
+    id: 9,
+    texto: "¿Has preferido aislarte o evitar el contacto con otras personas últimamente?",
+    opciones: [
+      { valor: 'apatia', peso: 1, etiqueta: "Ningún día" },
+      { valor: 'apatia', peso: 2, etiqueta: "Varios días" },
+      { valor: 'apatia', peso: 3, etiqueta: "Más de la mitad de los días" },
+      { valor: 'apatia', peso: 4, etiqueta: "Casi todos los días" }
+    ]
+  },
+  {
+    id: 10,
+    texto: "¿Qué tan capaz te sientes de manejar los retos que se presentan en tu día a día?",
+    opciones: [
+      { valor: 'bienestar', peso: 4, etiqueta: "Muy capaz, con confianza" },
+      { valor: 'bienestar', peso: 3, etiqueta: "Capaz, aunque con esfuerzo" },
+      { valor: 'ansiedad', peso: 2, etiqueta: "Poco capaz, me abruma con facilidad" },
+      { valor: 'tristeza', peso: 1, etiqueta: "Incapaz, siento que no puedo con nada" }
+    ]
   }
 ];
 
 export default function TestBienestar() {
   const navigate = useNavigate();
+  const [testIniciado, setTestIniciado] = useState(false);
   const [indicePregunta, setIndicePregunta] = useState(0);
   const [respuestas, setRespuestas] = useState({});
   const [testCompletado, setTestCompletado] = useState(false);
@@ -195,7 +246,8 @@ export default function TestBienestar() {
     if (indicePregunta > 0) {
       setIndicePregunta(indicePregunta - 1);
     } else {
-      navigate(esInvitado ? '/' : '/inicioS');
+      // Si está en la primera pregunta, regresa a la pantalla previa en vez de salir del test
+      setTestIniciado(false);
     }
   };
 
@@ -203,6 +255,69 @@ export default function TestBienestar() {
   const handleExportarPDF = () => {
     window.print();
   };
+
+  // PANTALLA PREVIA: se muestra antes de comenzar el test
+  if (!testIniciado) {
+    return (
+      <div className="min-h-screen bg-[#FAF7F2] px-4 py-8 font-sans sm:px-6 flex items-center justify-center">
+        <div className="w-full max-w-xl">
+          <header className="mb-8 flex items-center justify-between">
+            <button
+              onClick={() => navigate(esInvitado ? '/' : '/inicioS')}
+              aria-label="Volver atrás"
+              className="rounded-full p-2 text-gray-600 transition hover:bg-gray-200"
+            >
+              <ArrowLeft size={24} aria-hidden="true" />
+            </button>
+            <h1 className="text-lg font-bold text-[#00334F]">Test de Bienestar Emocional</h1>
+            <div className="w-10" aria-hidden="true"></div>
+          </header>
+
+          <main className="rounded-3xl bg-white p-6 shadow-sm sm:p-8 text-center">
+            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[#F0F9FF] text-[#0C4A6E]">
+              <ClipboardList size={32} aria-hidden="true" />
+            </div>
+
+            <h2 className="text-2xl font-bold text-[#00334F] mb-3">Antes de comenzar</h2>
+            <p className="text-sm text-gray-600 leading-relaxed mb-6">
+              Este test es una breve autoevaluación de tu estado emocional durante la última semana.
+              Tus respuestas nos ayudan a ofrecerte recomendaciones personalizadas.
+            </p>
+
+            <div className="space-y-3 text-left mb-6">
+              <div className="flex items-start gap-3 rounded-xl bg-[#FAF7F2] p-3 border border-gray-200">
+                <Clock size={20} className="mt-0.5 shrink-0 text-[#0C4A6E]" aria-hidden="true" />
+                <p className="text-sm text-gray-700">
+                  Toma menos de 2 minutos: son {PREGUNTAS.length} preguntas sencillas.
+                </p>
+              </div>
+              <div className="flex items-start gap-3 rounded-xl bg-[#FAF7F2] p-3 border border-gray-200">
+                <Lock size={20} className="mt-0.5 shrink-0 text-[#0C4A6E]" aria-hidden="true" />
+                <p className="text-sm text-gray-700">
+                  {esInvitado
+                    ? "Puedes hacerlo como invitado. Si quieres guardar tu historial, podrás registrarte al final."
+                    : "Tus resultados se guardarán en tu cuenta de forma privada."}
+                </p>
+              </div>
+              <div className="flex items-start gap-3 rounded-xl bg-[#FAF7F2] p-3 border border-gray-200">
+                <ShieldCheck size={20} className="mt-0.5 shrink-0 text-[#0C4A6E]" aria-hidden="true" />
+                <p className="text-sm text-gray-700">
+                  No hay respuestas correctas o incorrectas: responde con sinceridad según cómo te has sentido.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setTestIniciado(true)}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0C4A6E] px-4 py-4 text-lg font-bold text-white shadow-md transition-all hover:bg-[#073654]"
+            >
+              <Play size={20} aria-hidden="true" /> Comenzar evaluación
+            </button>
+          </main>
+        </div>
+      </div>
+    );
+  }
 
   if (testCompletado && analisisResultado) {
     const { predominante, porcentajes } = analisisResultado;

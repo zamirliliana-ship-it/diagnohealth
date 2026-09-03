@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-
 import {
   BrowserRouter as Router,
   Routes,
@@ -10,43 +9,24 @@ import {
 
 import { supabase } from "./config/supabase";
 
-// ===============================
-// PÁGINAS PÚBLICAS
-// ===============================
-
 import Landing from "./Pages/Home/Landing";
 import Login from "./Pages/Home/Login";
-import Registro from "./Pages/Home/Registro";
-import RecuperarPassword from "./Pages/Home/RecuperarPassword";
-import RestablecerPassword from "./Pages/Home/RestablecerPassword";
-import CrisisAlert from "./Pages/Home/CrisisAlert";
-import TestBienestar from "./Pages/Home/TestBienestar";
-
-// ===============================
-// PÁGINAS DEL USUARIO
-// ===============================
-
 import PanelUsuario from "./Pages/Home/PanelUsuario";
 import MiProgreso from "./Pages/Home/MiProgreso";
+import Registro from "./Pages/Home/Registro";
 import Chatbot from "./Pages/Home/Chatbot";
-import Perfil from "./Pages/Home/Perfil";
-import Historial from "./Pages/Home/Historial";
+import CrisisAlert from "./Pages/Home/CrisisAlert";
 import CerrarSesion from "./Pages/Home/CerrarSesion";
-
-// ===============================
-// ADMINISTRACIÓN
-// ===============================
-
+import RecuperarPassword from "./Pages/Home/RecuperarPassword";
+import RestablecerPassword from "./Pages/Home/RestablecerPassword";
+import TestBienestar from "./Pages/Home/TestBienestar";
+import Recursos from "./Pages/Home/Recursos";
+// Importa tu portal unificado de administración y el panel principal
 import AuthPortal from "./Pages/Admin/sesion";
 import DiagnoHealthApp from "./Pages/Admin/Admis";
 
-// ============================================================
-// RUTA PROTEGIDA
-// ============================================================
-
 function ProtectedRoute({ children }) {
   const location = useLocation();
-
   const [session, setSession] = useState(undefined);
 
   useEffect(() => {
@@ -79,13 +59,11 @@ function ProtectedRoute({ children }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(
-      (_event, newSession) => {
-        if (mounted) {
-          setSession(newSession);
-        }
+    } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      if (mounted) {
+        setSession(newSession);
       }
-    );
+    });
 
     return () => {
       mounted = false;
@@ -93,109 +71,43 @@ function ProtectedRoute({ children }) {
     };
   }, []);
 
-  // ==========================================
-  // VERIFICANDO SESIÓN
-  // ==========================================
-
   if (session === undefined) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#FAF7F2]">
         <div className="text-center">
           <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-[#0369A1]/20 border-t-[#0369A1]" />
-
-          <p className="text-sm text-gray-500">
-            Verificando sesión...
-          </p>
+          <p className="text-sm text-gray-500">Verificando sesión...</p>
         </div>
       </div>
     );
   }
 
-  // ==========================================
-  // USUARIO NO AUTENTICADO
-  // ==========================================
-
-  if (!session) {
-    return (
-      <Navigate
-        to="/login"
-        replace
-        state={{ from: location.pathname }}
-      />
-    );
-  }
-
-  // ==========================================
-  // USUARIO AUTENTICADO
-  // ==========================================
-
+ 
+if (!session) {
+  return (
+    <Navigate
+      to="/login" 
+      replace
+      state={{ from: location.pathname }}
+    />
+  );
+}
   return children;
 }
-
-// ============================================================
-// RUTAS
-// ============================================================
 
 function AppContent() {
   return (
     <Routes>
-
-      {/* ===============================
-          PÁGINAS PÚBLICAS
-      =============================== */}
-
       <Route path="/" element={<Landing />} />
-
-      <Route
-        path="/test-bienestar"
-        element={<TestBienestar />}
-      />
-
+      <Route path="/test-bienestar" element={<TestBienestar />} />
       <Route path="/login" element={<Login />} />
-
-      {/* Compatibilidad con la ruta antigua */}
-      <Route
-        path="/inicioS"
-        element={<Navigate to="/panel" replace />}
-      />
-
       <Route path="/registro" element={<Registro />} />
-
-      <Route
-        path="/recuperar-password"
-        element={<RecuperarPassword />}
-      />
-
-      <Route
-        path="/restablecer-password"
-        element={<RestablecerPassword />}
-      />
-
-      {/* Crisis puede mantenerse pública */}
-      <Route
-        path="/crisisAlert"
-        element={<CrisisAlert />}
-      />
-
-      <Route
-        path="/crisis-alert"
-        element={<CrisisAlert />}
-      />
-
-      {/* ===============================
-          ADMINISTRACIÓN
-      =============================== */}
-
-      <Route
-        path="/admin/login"
-        element={<AuthPortal />}
-      />
-
-      <Route
-        path="/admin/registro"
-        element={<AuthPortal />}
-      />
-
+      <Route path="/recuperar-password" element={<RecuperarPassword />} />
+      <Route path="/restablecer-password" element={<RestablecerPassword />} />
+      <Route path="/crisisAlert" element={<CrisisAlert />} />
+      <Route path="/crisis-alert" element={<CrisisAlert />} />
+      <Route path="/admin/login" element={<AuthPortal />} />
+      <Route path="/admin/registro" element={<AuthPortal />} />{" "}
       <Route
         path="/admin/admis"
         element={
@@ -204,24 +116,14 @@ function AppContent() {
           </ProtectedRoute>
         }
       />
-
-      {/* ===============================
-          PANEL PRINCIPAL
-      =============================== */}
-
       <Route
-        path="/panel"
+        path="/inicioS"
         element={
           <ProtectedRoute>
             <PanelUsuario />
           </ProtectedRoute>
         }
       />
-
-      {/* ===============================
-          MI PROGRESO
-      =============================== */}
-
       <Route
         path="/mi-progreso"
         element={
@@ -230,11 +132,14 @@ function AppContent() {
           </ProtectedRoute>
         }
       />
-
-      {/* ===============================
-          CHATBOT YAIRA
-      =============================== */}
-
+      <Route
+        path="/recursos"
+        element={
+          <ProtectedRoute>
+            <Recursos />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/chatbot"
         element={
@@ -243,37 +148,6 @@ function AppContent() {
           </ProtectedRoute>
         }
       />
-
-      {/* ===============================
-          HISTORIAL DE YAIRA
-      =============================== */}
-
-      <Route
-        path="/historial"
-        element={
-          <ProtectedRoute>
-            <Historial />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* ===============================
-          PERFIL DEL USUARIO
-      =============================== */}
-
-      <Route
-        path="/perfil"
-        element={
-          <ProtectedRoute>
-            <Perfil />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* ===============================
-          CERRAR SESIÓN
-      =============================== */}
-
       <Route
         path="/cerrar-sesion"
         element={
@@ -282,8 +156,6 @@ function AppContent() {
           </ProtectedRoute>
         }
       />
-
-      {/* Compatibilidad con ruta antigua */}
       <Route
         path="/CerrarSesion"
         element={
@@ -292,23 +164,10 @@ function AppContent() {
           </ProtectedRoute>
         }
       />
-
-      {/* ===============================
-          RUTA DESCONOCIDA
-      =============================== */}
-
-      <Route
-        path="*"
-        element={<Navigate to="/" replace />}
-      />
-
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
-
-// ============================================================
-// APP
-// ============================================================
 
 function App() {
   return (
