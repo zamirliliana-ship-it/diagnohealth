@@ -22,7 +22,7 @@ const API_URL =
   "http://localhost:3000";
 
 const MENSAJE_INICIAL =
-  "Hola, soy YAIRA, el asistente de bienestar emocional de DiagnoHealth. Estoy aquí para escucharte y acompañarte. ¿Cómo te sientes hoy?";
+  "Hola, soy DIAGNOHEALTH, el asistente de bienestar emocional de DiagnoHealth. Estoy aquí para escucharte y acompañarte. ¿Cómo te sientes hoy?";
 
 function Chatbot() {
   const navigate = useNavigate();
@@ -629,7 +629,7 @@ function Chatbot() {
     };
 
     // Guardamos el historial anterior
-    // para enviarlo a YAIRA.
+    // para enviarlo a DIAGNOHEALTH.
 
     const previousMessages =
       [...messages];
@@ -743,7 +743,7 @@ function Chatbot() {
 
         throw new Error(
           data?.message ||
-          "No fue posible obtener una respuesta de YAIRA."
+          "No fue posible obtener una respuesta de DIAGNOHEALTH."
         );
       }
 
@@ -775,7 +775,7 @@ function Chatbot() {
       }
 
       // ========================================================
-      // RESPUESTA YAIRA
+      // RESPUESTA DIAGNOHEALTH
       // ========================================================
 
       const aiMessage = {
@@ -811,13 +811,13 @@ function Chatbot() {
     } catch (err) {
 
       console.error(
-        "Error comunicando con YAIRA:",
+        "Error comunicando con DIAGNOHEALTH:",
         err
       );
 
       const errorMessage =
         err?.message ||
-        "No pude conectarme con YAIRA.";
+        "No pude conectarme con DIAGNOHEALTH.";
 
       setError(errorMessage);
 
@@ -1182,7 +1182,7 @@ function Chatbot() {
               <div>
 
                 <h2 className="font-bold text-gray-900">
-                  YAIRA IA
+                  DIAGNOHEALTH IA
                 </h2>
 
                 <p className="text-sm text-gray-500">
@@ -1267,7 +1267,7 @@ function Chatbot() {
 
                 <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-500">
 
-                  YAIRA está escribiendo...
+                  DIAGNOHEALTH está escribiendo...
 
                 </div>
 
@@ -1351,7 +1351,7 @@ function Chatbot() {
 
             <p className="mt-2 text-center text-[11px] text-gray-400">
 
-              YAIRA brinda acompañamiento emocional y no sustituye atención profesional.
+              DIAGNOHEALTH brinda acompañamiento emocional y no sustituye atención profesional.
 
             </p>
 
