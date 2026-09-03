@@ -10,6 +10,10 @@ import {
 
 import { supabase } from "../../config/supabase";
 
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:3000";
+
 function RestablecerPassword() {
   const navigate = useNavigate();
 
@@ -22,73 +26,165 @@ function RestablecerPassword() {
 
   const [loading, setLoading] = useState(false);
   const [verificando, setVerificando] = useState(true);
+  const [enlaceValido, setEnlaceValido] = useState(false);
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   useEffect(() => {
     let mounted = true;
+    let listo = false;
+
+    const finalizar = ({ valido, mensajeError = "" }) => {
+      if (!mounted || listo) return;
+
+      listo = true;
+      setEnlaceValido(valido);
+      setError(mensajeError);
+      setVerificando(false);
+    };
+
+    const obtenerErrorDeUrl = () => {
+      const hashParams = new URLSearchParams(
+        window.location.hash.replace(/^#/, "")
+      );
+      const queryParams = new URLSearchParams(
+        window.location.search
+      );
+
+      return (
+        hashParams.get("error_description") ||
+        queryParams.get("error_description") ||
+        hashParams.get("error") ||
+        queryParams.get("error")
+      );
+    };
 
     const verificarRecuperacion = async () => {
       try {
+        const errorUrl = obtenerErrorDeUrl();
+
+        if (errorUrl) {
+          finalizar({
+            valido: false,
+            mensajeError:
+              "El enlace de recuperación no es válido o ha expirado.",
+          });
+          return;
+        }
+
+        const hashParams = new URLSearchParams(
+          window.location.hash.replace(/^#/, "")
+        );
+        const queryParams = new URLSearchParams(
+          window.location.search
+        );
+        const code = queryParams.get("code");
+        const esEnlaceRecuperacion =
+          Boolean(code) ||
+          hashParams.get("type") === "recovery" ||
+          Boolean(hashParams.get("access_token"));
+
+        if (code) {
+          const { error: exchangeError } =
+            await supabase.auth.exchangeCodeForSession(code);
+
+          if (!mounted) return;
+
+          if (exchangeError) {
+            finalizar({
+              valido: false,
+              mensajeError:
+                "El enlace de recuperación no es válido o ha expirado.",
+            });
+            return;
+          }
+
+          window.history.replaceState(
+            {},
+            document.title,
+            "/restablecer-password"
+          );
+
+          finalizar({ valido: true });
+          return;
+        }
+
+        if (!esEnlaceRecuperacion) {
+          return;
+        }
+
         const {
           data: { session },
         } = await supabase.auth.getSession();
 
         if (!mounted) return;
 
-        /*
-         * Cuando Supabase devuelve al usuario desde
-         * el enlace de recuperación, debe existir una sesión.
-         */
-
-        if (!session) {
-          setError(
-            "El enlace de recuperación no es válido o ha expirado."
-          );
+        if (session) {
+          finalizar({ valido: true });
         }
-      } catch (error) {
+      } catch (errorVerificacion) {
         console.error(
           "Error verificando recuperación:",
-          error
+          errorVerificacion
         );
 
-        if (mounted) {
-          setError(
-            "No fue posible verificar el enlace de recuperación."
-          );
-        }
-      } finally {
-        if (mounted) {
-          setVerificando(false);
-        }
+        finalizar({
+          valido: false,
+          mensajeError:
+            "No fue posible verificar el enlace de recuperación.",
+        });
       }
     };
 
-    /*
-     * Escuchamos PASSWORD_RECOVERY porque Supabase
-     * utiliza este evento durante el flujo de recuperación.
-     */
-
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(
-      (event) => {
-        if (
-          event === "PASSWORD_RECOVERY" &&
-          mounted
-        ) {
-          setError("");
-          setVerificando(false);
-        }
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (!mounted) return;
+
+      if (event === "PASSWORD_RECOVERY") {
+        finalizar({ valido: true });
       }
-    );
+    });
 
     verificarRecuperacion();
+
+    const timeout = setTimeout(async () => {
+      if (!mounted || listo) return;
+
+      const hashParams = new URLSearchParams(
+        window.location.hash.replace(/^#/, "")
+      );
+      const queryParams = new URLSearchParams(
+        window.location.search
+      );
+      const tuvoEnlace =
+        Boolean(queryParams.get("code")) ||
+        hashParams.get("type") === "recovery" ||
+        Boolean(hashParams.get("access_token"));
+
+      if (tuvoEnlace) {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (session) {
+          finalizar({ valido: true });
+          return;
+        }
+      }
+
+      finalizar({
+        valido: false,
+        mensajeError:
+          "El enlace de recuperación no es válido o ha expirado.",
+      });
+    }, 2500);
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      clearTimeout(timeout);
     };
   }, []);
 
@@ -99,33 +195,67 @@ function RestablecerPassword() {
     setSuccess("");
 
     if (password.length < 6) {
-      setError(
-        "La contraseña debe tener al menos 6 caracteres."
-      );
+      setError("La contraseña debe tener al menos 6 caracteres.");
       return;
     }
 
     if (password !== confirmPassword) {
-      setError(
-        "Las contraseñas no coinciden."
-      );
+      setError("Las contraseñas no coinciden.");
       return;
     }
 
     setLoading(true);
 
     try {
-      const { error } =
-        await supabase.auth.updateUser({
-          password,
-        });
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-      if (error) {
-        throw error;
+      if (!session?.access_token) {
+        setEnlaceValido(false);
+        setError(
+          "El enlace de recuperación no es válido o ha expirado."
+        );
+        return;
+      }
+
+      const respuesta = await fetch(
+        `${API_URL}/api/auth/restablecer-password`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            password,
+            confirmPassword,
+          }),
+        }
+      );
+
+      let data = {};
+
+      try {
+        data = await respuesta.json();
+      } catch {
+        data = {};
+      }
+
+      if (!respuesta.ok) {
+        if (respuesta.status === 401) {
+          setEnlaceValido(false);
+        }
+
+        throw new Error(
+          data.message ||
+            "No fue posible actualizar la contraseña."
+        );
       }
 
       setSuccess(
-        "Tu contraseña fue actualizada correctamente."
+        data.message ||
+          "Tu contraseña fue actualizada correctamente."
       );
 
       setPassword("");
@@ -133,23 +263,18 @@ function RestablecerPassword() {
 
       setTimeout(async () => {
         await supabase.auth.signOut();
-
-        navigate("/inicioS", {
-          replace: true,
-        });
+        navigate("/login", { replace: true });
       }, 2000);
-
-    } catch (error) {
+    } catch (errorActualizacion) {
       console.error(
         "Error actualizando contraseña:",
-        error
+        errorActualizacion
       );
 
       setError(
-        error.message ||
+        errorActualizacion.message ||
           "No fue posible actualizar la contraseña."
       );
-
     } finally {
       setLoading(false);
     }
@@ -158,49 +283,32 @@ function RestablecerPassword() {
   if (verificando) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#FAF7F2] px-4">
-
         <div className="text-center">
-
           <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-[#0369A1]/20 border-t-[#0369A1]" />
 
           <p className="text-sm text-gray-500">
             Verificando enlace...
           </p>
-
         </div>
-
       </div>
     );
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#FAF7F2] px-4 py-10">
-
       <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
-
-        {/* ICONO */}
-
         <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[#E0F2FE]">
-
-          <Lock
-            size={30}
-            className="text-[#0369A1]"
-          />
-
+          <Lock size={30} className="text-[#0369A1]" />
         </div>
-
-        {/* TÍTULO */}
 
         <h1 className="text-center text-2xl font-bold text-[#00334F]">
           Nueva contraseña
         </h1>
 
         <p className="mt-2 text-center text-sm leading-6 text-gray-500">
-          Crea una nueva contraseña para volver a
-          acceder a tu cuenta de DiagnoHealth.
+          Crea una nueva contraseña para volver a acceder a tu cuenta
+          de DiagnoHealth.
         </p>
-
-        {/* ERROR */}
 
         {error && (
           <div
@@ -211,12 +319,9 @@ function RestablecerPassword() {
               size={20}
               className="mt-0.5 shrink-0"
             />
-
             <p>{error}</p>
           </div>
         )}
-
-        {/* ÉXITO */}
 
         {success && (
           <div
@@ -227,21 +332,13 @@ function RestablecerPassword() {
               size={20}
               className="mt-0.5 shrink-0"
             />
-
             <p>{success}</p>
           </div>
         )}
 
-        {!success && !error && (
-          <form
-            onSubmit={handleSubmit}
-            className="mt-7 space-y-5"
-          >
-
-            {/* NUEVA CONTRASEÑA */}
-
+        {!success && enlaceValido && (
+          <form onSubmit={handleSubmit} className="mt-7 space-y-5">
             <div>
-
               <label
                 htmlFor="password"
                 className="mb-2 block text-sm font-medium text-[#00334F]"
@@ -250,7 +347,6 @@ function RestablecerPassword() {
               </label>
 
               <div className="relative">
-
                 <Lock
                   size={18}
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -258,11 +354,7 @@ function RestablecerPassword() {
 
                 <input
                   id="password"
-                  type={
-                    showPassword
-                      ? "text"
-                      : "password"
-                  }
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(event) =>
                     setPassword(event.target.value)
@@ -276,9 +368,7 @@ function RestablecerPassword() {
                 <button
                   type="button"
                   onClick={() =>
-                    setShowPassword(
-                      (value) => !value
-                    )
+                    setShowPassword((value) => !value)
                   }
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
                   aria-label={
@@ -293,15 +383,10 @@ function RestablecerPassword() {
                     <Eye size={18} />
                   )}
                 </button>
-
               </div>
-
             </div>
 
-            {/* CONFIRMAR */}
-
             <div>
-
               <label
                 htmlFor="confirmPassword"
                 className="mb-2 block text-sm font-medium text-[#00334F]"
@@ -310,7 +395,6 @@ function RestablecerPassword() {
               </label>
 
               <div className="relative">
-
                 <Lock
                   size={18}
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -318,16 +402,10 @@ function RestablecerPassword() {
 
                 <input
                   id="confirmPassword"
-                  type={
-                    showConfirmPassword
-                      ? "text"
-                      : "password"
-                  }
+                  type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(event) =>
-                    setConfirmPassword(
-                      event.target.value
-                    )
+                    setConfirmPassword(event.target.value)
                   }
                   placeholder="Repite tu contraseña"
                   autoComplete="new-password"
@@ -338,9 +416,7 @@ function RestablecerPassword() {
                 <button
                   type="button"
                   onClick={() =>
-                    setShowConfirmPassword(
-                      (value) => !value
-                    )
+                    setShowConfirmPassword((value) => !value)
                   }
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
                   aria-label={
@@ -355,12 +431,8 @@ function RestablecerPassword() {
                     <Eye size={18} />
                   )}
                 </button>
-
               </div>
-
             </div>
-
-            {/* BOTÓN */}
 
             <button
               type="submit"
@@ -368,16 +440,12 @@ function RestablecerPassword() {
               className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#67A8CE] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#4F96C0] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Lock size={18} />
-
-              {loading
-                ? "Actualizando..."
-                : "Cambiar contraseña"}
+              {loading ? "Actualizando..." : "Cambiar contraseña"}
             </button>
-
           </form>
         )}
 
-        {error && (
+        {!enlaceValido && (
           <button
             type="button"
             onClick={() => navigate("/recuperar-password")}
@@ -386,9 +454,7 @@ function RestablecerPassword() {
             Solicitar otro enlace
           </button>
         )}
-
       </div>
-
     </div>
   );
 }

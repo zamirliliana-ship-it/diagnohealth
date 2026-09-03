@@ -1,12 +1,19 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "../../config/supabase";
+
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:3000";
 
 export default function RecuperarPassword() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [mensaje, setMensaje] = useState("");
   const [error, setError] = useState("");
+
+  const getRedirectUrl = () => {
+    return `${window.location.origin}/restablecer-password`;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,46 +24,79 @@ export default function RecuperarPassword() {
     const correo = email.trim().toLowerCase();
 
     if (!correo) {
-      setError("Ingresa tu correo electrónico.");
+      setError("Por favor, ingresa tu correo electrónico.");
       return;
     }
 
-    if (!/\S+@\S+\.\S+/.test(correo)) {
-      setError("Ingresa un correo electrónico válido.");
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(correo)) {
+      setError("Por favor, ingresa un correo electrónico válido.");
       return;
     }
 
     setLoading(true);
 
     try {
-      const { error: supabaseError } =
-        await supabase.auth.resetPasswordForEmail(correo, {
-          redirectTo: `${window.location.origin}/restablecer-password`,
-        });
+      const redirectUrl = getRedirectUrl();
 
-      if (supabaseError) {
-        console.error("Error en recuperación:", supabaseError);
+      const respuesta = await fetch(
+        `${API_URL}/api/auth/recuperar-password`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            correo,
+            redirectTo: redirectUrl,
+          }),
+        }
+      );
 
-        /*
-         * No mostramos si el correo existe o no.
-         * Esto evita revelar información sobre las cuentas
-         * registradas en DiagnoHealth.
-         */
+      let data = {};
+
+      try {
+        data = await respuesta.json();
+      } catch {
+        data = {};
+      }
+
+      if (!respuesta.ok) {
+        const mensajeError =
+          (data.message || "").toLowerCase();
+
+        if (
+          respuesta.status === 429 ||
+          mensajeError.includes("espera unos minutos")
+        ) {
+          setError(
+            "Has solicitado varios enlaces recientemente. Por favor, espera unos minutos antes de intentarlo nuevamente."
+          );
+          return;
+        }
+
         setError(
-          "No fue posible enviar el enlace de recuperación. Inténtalo nuevamente."
+          data.message ||
+            "No fue posible procesar la solicitud."
         );
-
         return;
       }
 
       setMensaje(
-        "Si existe una cuenta asociada a este correo, recibirás un enlace para restablecer tu contraseña."
+        data.message ||
+          "Si existe una cuenta asociada a este correo, recibirás un enlace para restablecer tu contraseña. Revisa también la carpeta de spam."
       );
+
+      setEmail("");
     } catch (err) {
-      console.error("Error inesperado en recuperación:", err);
+      console.error(
+        "Error inesperado en recuperación:",
+        err
+      );
 
       setError(
-        "Ocurrió un error al procesar la solicitud. Inténtalo nuevamente."
+        "Ocurrió un error inesperado. Por favor, inténtalo nuevamente."
       );
     } finally {
       setLoading(false);
@@ -66,14 +106,12 @@ export default function RecuperarPassword() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f8f6f1] px-4 py-8">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-md border border-gray-200 p-8">
-        {/* Icono */}
         <div className="flex justify-center mb-5">
           <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
             <span className="text-3xl">✉️</span>
           </div>
         </div>
 
-        {/* Título */}
         <div className="text-center mb-7">
           <h1 className="text-2xl font-bold text-[#003b5c]">
             Recuperar contraseña
@@ -85,14 +123,12 @@ export default function RecuperarPassword() {
           </p>
         </div>
 
-        {/* Mensaje de éxito */}
         {mensaje && (
           <div className="mb-5 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-700">
             {mensaje}
           </div>
         )}
 
-        {/* Error */}
         {error && (
           <div className="mb-5 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-600">
             {error}
@@ -100,7 +136,6 @@ export default function RecuperarPassword() {
         )}
 
         <form onSubmit={handleSubmit}>
-          {/* Correo */}
           <div className="mb-5">
             <label
               htmlFor="email"
@@ -117,24 +152,24 @@ export default function RecuperarPassword() {
               placeholder="tu@correo.com"
               autoComplete="email"
               disabled={loading}
-              className="w-full h-12 rounded-lg border border-gray-300 px-4 outline-none transition focus:border-[#69a9cc] focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              className="w-full h-12 rounded-lg border border-gray-300 px-4 outline-none transition focus:border-[#69a9cc] focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
           </div>
 
-          {/* Botón */}
           <button
             type="submit"
             disabled={loading}
             className="w-full h-12 rounded-lg bg-[#69a9cc] text-white font-semibold transition hover:bg-[#5799bf] disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {loading ? "Enviando..." : "Enviar enlace de recuperación"}
+            {loading
+              ? "Enviando..."
+              : "Enviar enlace de recuperación"}
           </button>
         </form>
 
-        {/* Volver */}
         <div className="mt-6 text-center">
           <Link
-            to="/inicioS"
+            to="/login"
             className="text-sm font-medium text-[#006da4] hover:underline"
           >
             ← Volver a iniciar sesión

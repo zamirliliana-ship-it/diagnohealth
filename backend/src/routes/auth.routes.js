@@ -4,6 +4,8 @@ import {
   register,
   login,
   me,
+  recuperarPassword,
+  restablecerPassword,
 } from "../controllers/auth.controller.js";
 
 import {
@@ -31,6 +33,16 @@ router.get(
   "/me",
   requireAuth,
   me
+);
+
+router.post(
+  "/recuperar-password",
+  recuperarPassword
+);
+
+router.post(
+  "/restablecer-password",
+  restablecerPassword
 );
 
 export default router;
