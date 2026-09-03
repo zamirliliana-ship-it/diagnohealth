@@ -10,7 +10,7 @@ const openai = new OpenAI({
 });
 
 // ============================================================
-// CHAT CON YAIRA
+// CHAT CON DIAGNOHEALTH
 // ============================================================
 
 export const chat = async (req, res) => {
@@ -210,7 +210,7 @@ export const chat = async (req, res) => {
     // CONSULTAR OPENAI
     // ==========================================================
 
-    console.log("YAIRA está procesando el mensaje...");
+    console.log("DIAGNOHEALTH está procesando el mensaje...");
 
     const response =
       await openai.responses.create({
@@ -226,7 +226,7 @@ export const chat = async (req, res) => {
       "Estoy aquí contigo. ¿Quieres contarme un poco más sobre cómo te estás sintiendo?";
 
     // ==========================================================
-    // GUARDAR RESPUESTA DE YAIRA
+    // GUARDAR RESPUESTA DE DIAGNOHEALTH
     // ==========================================================
 
     const {
@@ -241,12 +241,12 @@ export const chat = async (req, res) => {
 
     if (mensajeChatbotError) {
       console.error(
-        "Error guardando respuesta de YAIRA:",
+        "Error guardando respuesta de DIAGNOHEALTH:",
         mensajeChatbotError
       );
 
       throw new Error(
-        "YAIRA respondió, pero no fue posible guardar su mensaje."
+        "DIAGNOHEALTH respondió, pero no fue posible guardar su mensaje."
       );
     }
 
@@ -296,7 +296,7 @@ export const chat = async (req, res) => {
 
       message:
         error.message ||
-        "No fue posible obtener una respuesta de YAIRA.",
+        "No fue posible obtener una respuesta de DIAGNOHEALTH.",
     });
   }
 };
