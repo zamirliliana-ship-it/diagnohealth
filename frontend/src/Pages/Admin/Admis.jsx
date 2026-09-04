@@ -1265,7 +1265,7 @@ const PatientsView = () => {
 };
 
 // ==========================================
-// VISTA 4: FUENTES (Subida de Archivos, Icono y Vista Previa)
+// VISTA 4: FUENTES (Con limpieza de nombres y Vista Previa Funcional)
 // ==========================================
 const SourcesView = () => {
   const [sources, setSources] = useState([]);
@@ -1317,24 +1317,27 @@ const SourcesView = () => {
           .replace(/[\u0300-\u036f]/g, "")
           .replace(/[^a-zA-Z0-9.\-_]/g, "_");
 
-      const fileName = `${Date.now()}_${limpiarNombre(selectedFile.name)}`;
+      const originalName = selectedFile.name;
+      const storageName = `${Date.now()}_${limpiarNombre(originalName)}`;
 
-      const { data: storageData, error: storageError } = await supabase.storage
+      const { error: storageError } = await supabase.storage
         .from("sources")
-        .upload(fileName, selectedFile);
+        .upload(storageName, selectedFile);
 
       if (storageError) throw storageError;
 
-      const type = selectedFile.name.split(".").pop().toUpperCase() || "PDF";
+      const type = originalName.split(".").pop().toUpperCase() || "PDF";
 
+      // Guardamos el nombre original limpio para mostrarlo y el de storage para borrarlo
       const { error: dbError } = await supabase
         .from("sources")
-        .insert([{ name: fileName, type }]);
+        .insert([{ name: originalName, file_path: storageName, type }]);
 
       if (dbError) throw dbError;
 
       setSelectedFile(null);
-      alert("¡Guía o manual subido con éxito!");
+      // Limpiar input de archivo físico
+      e.target.reset();
       fetchSources();
     } catch (error) {
       console.error("Error al subir archivo:", error);
@@ -1347,24 +1350,30 @@ const SourcesView = () => {
     }
   };
 
-  const handleDelete = async (id, fileName) => {
-    if (!confirm("¿Deseas eliminar esta guía clínica?")) return;
+  const handleDelete = async (id, filePath, fileName) => {
+    if (!confirm(`¿Deseas eliminar la guía "${fileName}"?`)) return;
 
-    await supabase.storage.from("sources").remove([fileName]);
+    // Si la tabla vieja no tiene file_path, usamos fileName como respaldo
+    const pathToRemove = filePath || fileName;
+
+    await supabase.storage.from("sources").remove([pathToRemove]);
     await supabase.from("sources").delete().eq("id", id);
     fetchSources();
   };
 
-  const handlePreview = (fileName) => {
-    const { data } = supabase.storage.from("sources").getPublicUrl(fileName);
+  const handlePreview = (filePath, fileName) => {
+    const targetPath = filePath || fileName;
+    const { data } = supabase.storage.from("sources").getPublicUrl(targetPath);
 
     if (data && data.publicUrl) {
       setPreviewFile({ name: fileName, url: data.publicUrl });
+    } else {
+      alert("No se pudo generar la vista previa del archivo.");
     }
   };
 
   return (
-    <main className="flex-1 p-8 space-y-6">
+    <main className="flex-1 p-8 space-y-6 bg-slate-50 min-h-screen">
       <header className="bg-white p-4 rounded-xl border shadow-sm">
         <h2 className="text-xl font-bold text-sky-950">
           Gestión de Fuentes de Conocimiento
@@ -1407,19 +1416,22 @@ const SourcesView = () => {
       </form>
 
       <div className="bg-white border rounded-xl overflow-hidden shadow-sm">
-        <table className="w-full text-left">
+        <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b bg-gray-50 text-gray-500 text-xs uppercase">
-              <th className="px-6 py-4">Nombre</th>
-              <th className="px-6 py-4">Tipo</th>
-              <th className="px-6 py-4 text-right">Acciones</th>
+            <tr className="border-b bg-gray-50/70 text-gray-400 text-xs uppercase tracking-wider">
+              <th className="px-6 py-4 font-semibold">Nombre</th>
+              <th className="px-6 py-4 font-semibold">Tipo</th>
+              <th className="px-6 py-4 font-semibold text-right">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y text-sm">
             {sources.length > 0 ? (
               sources.map((s) => (
-                <tr key={s.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 font-medium text-gray-800 flex items-center gap-3">
+                <tr
+                  key={s.id}
+                  className="hover:bg-slate-50/80 transition-colors"
+                >
+                  <td className="px-6 py-4 font-bold text-slate-800 flex items-center gap-3">
                     <span className="material-symbols-outlined text-sky-600 text-[22px]">
                       description
                     </span>
@@ -1434,7 +1446,7 @@ const SourcesView = () => {
                   </td>
                   <td className="px-6 py-4 text-right space-x-2">
                     <button
-                      onClick={() => handlePreview(s.name)}
+                      onClick={() => handlePreview(s.file_path, s.name)}
                       className="text-sky-600 hover:text-sky-800 cursor-pointer inline-flex items-center gap-1 bg-sky-50 px-3 py-1 rounded-lg text-xs font-semibold border border-sky-200"
                       title="Vista previa"
                     >
@@ -1444,7 +1456,7 @@ const SourcesView = () => {
                       Vista previa
                     </button>
                     <button
-                      onClick={() => handleDelete(s.id, s.name)}
+                      onClick={() => handleDelete(s.id, s.file_path, s.name)}
                       className="text-red-500 hover:text-red-700 cursor-pointer inline-flex items-center gap-1 bg-red-50 px-3 py-1 rounded-lg text-xs font-semibold border border-red-200"
                       title="Eliminar fuente"
                     >
@@ -1470,6 +1482,7 @@ const SourcesView = () => {
         </table>
       </div>
 
+      {/* MODAL DE VISTA PREVIA */}
       {previewFile && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-xl max-w-4xl w-full h-[80vh] flex flex-col shadow-2xl overflow-hidden">
@@ -1494,9 +1507,8 @@ const SourcesView = () => {
               ) : (
                 <div className="text-center p-6 space-y-4">
                   <p className="text-sm text-gray-600">
-                    Este tipo de archivo no cuenta con previsualización directa
-                    en el navegador, pero puedes descargarlo o abrirlo
-                    directamente.
+                    Este archivo no cuenta con previsualización directa, pero
+                    puedes descargarlo.
                   </p>
                   <a
                     href={previewFile.url}
@@ -1517,14 +1529,19 @@ const SourcesView = () => {
 };
 
 // ==========================================
-// VISTA 5: RECURSOS
+// VISTA 5: RECURSOS (Con Edición, Eliminación y Video Incorporado)
 // ==========================================
 const ResourcesView = () => {
   const [resources, setResources] = useState([]);
   const [title, setTitle] = useState("");
   const [cat, setCat] = useState("Relajación");
+  const [description, setDescription] = useState("");
+  const [url, setUrl] = useState("");
+  const [contentType, setContentType] = useState("Lectura");
   const [busqueda, setBusqueda] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [viewResource, setViewResource] = useState(null);
   const [resourceToDelete, setResourceToDelete] = useState(null);
 
   const fetchResources = async () => {
@@ -1550,9 +1567,32 @@ const ResourcesView = () => {
     };
   }, []);
 
-  const handleAdd = async (e) => {
+  // Abrir modal para crear
+  const handleOpenCreate = () => {
+    setTitle("");
+    setCat("Relajación");
+    setDescription("");
+    setUrl("");
+    setContentType("Lectura");
+    setEditingId(null);
+    setShowModal(true);
+  };
+
+  // Abrir modal para editar
+  const handleOpenEdit = (r) => {
+    setTitle(r.title);
+    setCat(r.cat);
+    setDescription(r.description || "");
+    setUrl(r.url || "");
+    setContentType(r.content_type || "Lectura");
+    setEditingId(r.id);
+    setShowModal(true);
+  };
+
+  const handleSave = async (e) => {
     e.preventDefault();
     if (!title.trim()) return;
+
     const icon =
       cat === "Relajación"
         ? "air"
@@ -1562,14 +1602,31 @@ const ResourcesView = () => {
             ? "mindfulness"
             : "ecg";
 
-    await supabase.from("resources").insert([{ title, cat, icon }]);
-    setTitle("");
-    setShowModal(false);
-    fetchResources();
-  };
+    if (editingId) {
+      // Actualizar registro existente
+      await supabase
+        .from("resources")
+        .update({
+          title,
+          cat,
+          icon,
+          description,
+          url,
+          content_type: contentType,
+        })
+        .eq("id", editingId);
+    } else {
+      // Crear nuevo registro
+      await supabase
+        .from("resources")
+        .insert([
+          { title, cat, icon, description, url, content_type: contentType },
+        ]);
+    }
 
-  const openDeleteModal = (id, resourceTitle) => {
-    setResourceToDelete({ id, title: resourceTitle });
+    setShowModal(false);
+    setEditingId(null);
+    fetchResources();
   };
 
   const confirmDelete = async () => {
@@ -1577,6 +1634,19 @@ const ResourcesView = () => {
     await supabase.from("resources").delete().eq("id", resourceToDelete.id);
     setResourceToDelete(null);
     fetchResources();
+  };
+
+  // Conversor rápido de enlaces de YouTube para que carguen directo en iframe
+  const getEmbedUrl = (rawUrl) => {
+    if (!rawUrl) return "";
+    if (rawUrl.includes("youtube.com/watch?v=")) {
+      const videoId = rawUrl.split("v=")[1]?.split("&")[0];
+      return `https://www.youtube.com/embed/${videoId}`;
+    } else if (rawUrl.includes("youtu.be/")) {
+      const videoId = rawUrl.split("youtu.be/")[1]?.split("?")[0];
+      return `https://www.youtube.com/embed/${videoId}`;
+    }
+    return rawUrl;
   };
 
   const filteredResources = resources.filter(
@@ -1588,11 +1658,7 @@ const ResourcesView = () => {
   return (
     <main className="flex-1 p-8 space-y-6 bg-slate-50 min-h-screen">
       <header className="flex justify-between items-center bg-white p-4 rounded-xl border shadow-sm">
-        <div className="flex items-center gap-4">
-          <h2 className="text-xl font-bold text-sky-950">
-            Gestión de recursos
-          </h2>
-        </div>
+        <h2 className="text-xl font-bold text-sky-950">Gestión de recursos</h2>
         <div className="flex items-center gap-6">
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400 text-sm">
@@ -1607,7 +1673,7 @@ const ResourcesView = () => {
             />
           </div>
           <button
-            onClick={() => setShowModal(true)}
+            onClick={handleOpenCreate}
             className="bg-[#0369A1] hover:bg-sky-800 text-white px-5 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all active:scale-95 cursor-pointer shadow-sm"
           >
             <span className="material-symbols-outlined text-sm">add</span>
@@ -1621,19 +1687,22 @@ const ResourcesView = () => {
         <div className="relative z-10">
           <h3 className="text-2xl font-bold mb-1">Biblioteca de Bienestar</h3>
           <p className="text-sky-200 text-sm max-w-lg">
-            Gestiona y actualiza las herramientas terapéuticas y guías de salud
-            mental para los pacientes.
+            Gestiona herramientas terapéuticas, guías de salud mental y videos
+            incrustados para los pacientes.
           </p>
         </div>
       </div>
 
+      {/* MODAL CREAR / EDITAR */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl border border-gray-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-xl max-w-lg w-full p-6 shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-sky-950 mb-4">
-              Agregar Nuevo Recurso
+              {editingId
+                ? "Editar Recurso Terapéutico"
+                : "Agregar Nuevo Recurso"}
             </h3>
-            <form onSubmit={handleAdd} className="space-y-4">
+            <form onSubmit={handleSave} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-gray-600 uppercase mb-1">
                   Título
@@ -1647,21 +1716,66 @@ const ResourcesView = () => {
                   className="w-full bg-gray-50 border rounded-lg px-4 py-2 text-sm outline-none focus:border-sky-500"
                 />
               </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 uppercase mb-1">
+                    Categoría
+                  </label>
+                  <select
+                    value={cat}
+                    onChange={(e) => setCat(e.target.value)}
+                    className="w-full bg-gray-50 border rounded-lg px-4 py-2 text-sm outline-none focus:border-sky-500 cursor-pointer"
+                  >
+                    <option value="Relajación">Relajación</option>
+                    <option value="Hábitos">Hábitos</option>
+                    <option value="Terapia Cognitiva">Terapia Cognitiva</option>
+                    <option value="Urgencias">Urgencias</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 uppercase mb-1">
+                    Formato
+                  </label>
+                  <select
+                    value={contentType}
+                    onChange={(e) => setContentType(e.target.value)}
+                    className="w-full bg-gray-50 border rounded-lg px-4 py-2 text-sm outline-none focus:border-sky-500 cursor-pointer"
+                  >
+                    <option value="Lectura">Lectura</option>
+                    <option value="Audio">Audio</option>
+                    <option value="Video">Video</option>
+                  </select>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-gray-600 uppercase mb-1">
-                  Categoría
+                  Descripción o instrucciones
                 </label>
-                <select
-                  value={cat}
-                  onChange={(e) => setCat(e.target.value)}
-                  className="w-full bg-gray-50 border rounded-lg px-4 py-2 text-sm outline-none focus:border-sky-500 cursor-pointer"
-                >
-                  <option value="Relajación">Relajación</option>
-                  <option value="Hábitos">Hábitos</option>
-                  <option value="Terapia Cognitiva">Terapia Cognitiva</option>
-                  <option value="Urgencias">Urgencias</option>
-                </select>
+                <textarea
+                  rows="3"
+                  placeholder="Detalles del recurso..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full bg-gray-50 border rounded-lg p-3 text-sm outline-none focus:border-sky-500 resize-none"
+                />
               </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-600 uppercase mb-1">
+                  Enlace (YouTube o archivo)
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  className="w-full bg-gray-50 border rounded-lg px-4 py-2 text-sm outline-none focus:border-sky-500"
+                />
+              </div>
+
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
@@ -1674,7 +1788,7 @@ const ResourcesView = () => {
                   type="submit"
                   className="flex-1 py-2.5 bg-sky-900 text-white rounded-lg text-sm font-medium hover:bg-sky-950 cursor-pointer shadow-sm"
                 >
-                  Guardar Recurso
+                  {editingId ? "Actualizar Recurso" : "Guardar Recurso"}
                 </button>
               </div>
             </form>
@@ -1682,6 +1796,74 @@ const ResourcesView = () => {
         </div>
       )}
 
+      {/* MODAL VISTA PREVIA (CON REPRODUCTOR DE VIDEO INCORPORADO) */}
+      {viewResource && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-xl max-w-2xl w-full p-6 shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-start border-b pb-3 mb-4">
+              <div>
+                <span className="bg-[#E0F2FE] text-[#0C4A6E] px-3 py-1 rounded-full text-xs font-medium">
+                  {viewResource.cat} • {viewResource.content_type || "Lectura"}
+                </span>
+                <h3 className="text-xl font-bold text-sky-950 mt-2">
+                  {viewResource.title}
+                </h3>
+              </div>
+              <button
+                onClick={() => setViewResource(null)}
+                className="text-gray-400 hover:text-gray-700 font-bold text-lg cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* SI ES VIDEO Y TIENE URL, SE MUESTRA EL REPRODUCTOR DIRECTO EN LA APP */}
+            {viewResource.content_type === "Video" && viewResource.url ? (
+              <div className="mb-4 aspect-video w-full rounded-xl overflow-hidden bg-black shadow-inner">
+                <iframe
+                  src={getEmbedUrl(viewResource.url)}
+                  title={viewResource.title}
+                  className="w-full h-full border-0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            ) : null}
+
+            <div className="space-y-4 text-sm text-gray-700">
+              <div className="bg-gray-50 p-4 rounded-xl border whitespace-pre-wrap">
+                {viewResource.description ||
+                  "Sin descripción detallada registrada."}
+              </div>
+
+              {viewResource.url && viewResource.content_type !== "Video" && (
+                <a
+                  href={viewResource.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sky-600 hover:underline font-medium text-xs flex items-center gap-1"
+                >
+                  <span className="material-symbols-outlined text-sm">
+                    open_in_new
+                  </span>
+                  Abrir enlace externo
+                </a>
+              )}
+            </div>
+
+            <div className="mt-6 pt-4 border-t text-right">
+              <button
+                onClick={() => setViewResource(null)}
+                className="px-5 py-2 bg-sky-900 text-white rounded-lg text-sm font-medium cursor-pointer"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL ELIMINAR */}
       {resourceToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-xl max-w-md w-full p-8 shadow-2xl text-center">
@@ -1696,7 +1878,6 @@ const ResourcesView = () => {
             <p className="text-gray-500 text-sm mb-6">
               Estás a punto de eliminar permanentemente{" "}
               <span className="font-bold">"{resourceToDelete.title}"</span>.
-              Esta acción no se puede deshacer.
             </p>
             <div className="flex gap-4">
               <button
@@ -1716,6 +1897,7 @@ const ResourcesView = () => {
         </div>
       )}
 
+      {/* TABLA DE RECURSOS */}
       <div className="bg-white border border-[#E2D9CA] rounded-xl overflow-hidden shadow-sm">
         <table className="w-full text-left border-collapse">
           <thead>
@@ -1745,9 +1927,15 @@ const ResourcesView = () => {
                             {r.icon || "library_books"}
                           </span>
                         </div>
-                        <span className="font-bold text-slate-800">
-                          {r.title}
-                        </span>
+                        <div>
+                          <span className="font-bold text-slate-800 block">
+                            {r.title}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {r.content_type || "Lectura"}{" "}
+                            {r.url ? "• Con contenido" : ""}
+                          </span>
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -1762,7 +1950,16 @@ const ResourcesView = () => {
                     </td>
                     <td className="px-6 py-4 text-right space-x-1">
                       <button
-                        onClick={() => alert(`Editar recurso: ${r.title}`)}
+                        onClick={() => setViewResource(r)}
+                        className="p-2 text-gray-400 hover:text-sky-600 transition-colors cursor-pointer rounded-lg hover:bg-sky-50"
+                        title="Ver detalle / video"
+                      >
+                        <span className="material-symbols-outlined text-lg">
+                          visibility
+                        </span>
+                      </button>
+                      <button
+                        onClick={() => handleOpenEdit(r)}
                         className="p-2 text-gray-400 hover:text-sky-600 transition-colors cursor-pointer rounded-lg hover:bg-sky-50"
                         title="Editar"
                       >
@@ -1771,7 +1968,7 @@ const ResourcesView = () => {
                         </span>
                       </button>
                       <button
-                        onClick={() => openDeleteModal(r.id, r.title)}
+                        onClick={() => setResourceToDelete(r)}
                         className="p-2 text-gray-400 hover:text-red-600 transition-colors cursor-pointer rounded-lg hover:bg-red-50"
                         title="Eliminar"
                       >
@@ -1796,24 +1993,6 @@ const ResourcesView = () => {
             )}
           </tbody>
         </table>
-
-        <div className="px-6 py-4 bg-gray-50/50 border-t border-[#E2D9CA] flex justify-between items-center text-xs text-gray-500">
-          <span>
-            Mostrando {filteredResources.length} de {resources.length} recursos
-          </span>
-          <div className="flex gap-1">
-            <button className="p-1 rounded border bg-white hover:bg-gray-100 transition-colors cursor-pointer">
-              <span className="material-symbols-outlined text-sm">
-                chevron_left
-              </span>
-            </button>
-            <button className="p-1 rounded border bg-white hover:bg-gray-100 transition-colors cursor-pointer">
-              <span className="material-symbols-outlined text-sm">
-                chevron_right
-              </span>
-            </button>
-          </div>
-        </div>
       </div>
     </main>
   );
