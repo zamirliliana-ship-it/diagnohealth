@@ -351,7 +351,7 @@ const AuthPortal = () => {
                       name="createdAt"
                       readOnly
                       type="date"
-                      defaultValue="2026-08-25"
+                      defaultValue={new Date().toISOString().split("T")[0]}
                     />
                   </div>
                 </div>
@@ -494,7 +494,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
 };
 
 // ==========================================
-// VISTA 1: PANEL (Dashboard conectado a 'usuarios')
+// VISTA 1: PANEL (Dashboard conectado a todas las tablas)
 // ==========================================
 const DashboardView = ({ setActiveTab }) => {
   const [stats, setStats] = useState({
@@ -505,23 +505,50 @@ const DashboardView = ({ setActiveTab }) => {
   });
 
   const [recentPatients, setRecentPatients] = useState([]);
+  const [activeAlertsList, setActiveAlertsList] = useState([]);
 
   const fetchDashboardData = async () => {
     try {
+      // 1. Contar Usuarios y obtener recientes
       const { count: userCount, data: usersData } = await supabase
         .from("usuarios")
-        .select("*")
+        .select("*", { count: "exact" })
         .order("created_at", { ascending: false });
+
+      // 2. Contar Sesiones de Chat (tabla: conversaciones)
+      const { count: chatCount } = await supabase
+        .from("conversaciones")
+        .select("*", { count: "exact", head: true });
+
+      // 3. Contar Alertas de crisis (tabla: alertas_crisis)
+      const { count: crisisCount, data: crisisData } = await supabase
+        .from("alertas_crisis")
+        .select("*", { count: "exact" })
+        .order("created_at", { ascending: false });
+
+      // 4. Contar Tests realizados (tabla: tests)
+      const { count: testCount } = await supabase
+        .from("tests")
+        .select("*", { count: "exact", head: true });
 
       if (usersData) {
         setRecentPatients(usersData.slice(0, 5));
-        setStats({
-          users: userCount !== null ? userCount : usersData.length,
-          chats: 0,
-          crises: 0,
-          tests: 0,
-        });
       }
+
+      if (crisisData) {
+        // Filtramos las que no han sido atendidas para mostrarlas en la lista (opcional)
+        setActiveAlertsList(
+          crisisData.filter((alerta) => !alerta.atendido).slice(0, 3),
+        );
+      }
+
+      // Actualizar todos los estados
+      setStats({
+        users: userCount !== null ? userCount : usersData?.length || 0,
+        chats: chatCount !== null ? chatCount : 0,
+        crises: crisisCount !== null ? crisisCount : 0,
+        tests: testCount !== null ? testCount : 0,
+      });
     } catch (err) {
       console.error("Error cargando dashboard:", err);
     }
@@ -529,11 +556,28 @@ const DashboardView = ({ setActiveTab }) => {
 
   useEffect(() => {
     fetchDashboardData();
+
+    // Suscribirse a cambios en TODAS las tablas relevantes para actualizar los contadores
     const channel = supabase
       .channel("dashboard-realtime")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "usuarios" },
+        fetchDashboardData,
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "conversaciones" },
+        fetchDashboardData,
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "alertas_crisis" },
+        fetchDashboardData,
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "tests" },
         fetchDashboardData,
       )
       .subscribe();
@@ -645,9 +689,28 @@ const DashboardView = ({ setActiveTab }) => {
 
         <div className="lg:col-span-4 bg-white border rounded-xl p-6 shadow-sm space-y-4">
           <h4 className="font-bold text-gray-800">Alertas Críticas</h4>
-          <div className="p-4 bg-gray-50 border rounded-lg text-center text-gray-400 text-sm py-10">
-            No hay alertas activas en el sistema.
-          </div>
+          {activeAlertsList.length === 0 ? (
+            <div className="p-4 bg-gray-50 border rounded-lg text-center text-gray-400 text-sm py-10">
+              No hay alertas activas en el sistema.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {activeAlertsList.map((alerta) => (
+                <div
+                  key={alerta.id}
+                  className="p-3 bg-red-50 border border-red-100 rounded-lg text-xs"
+                >
+                  <p className="font-bold text-red-700 mb-1">
+                    Alerta detectada
+                  </p>
+                  <p className="text-red-600 line-clamp-2">
+                    {alerta.motivo ||
+                      "Situación de riesgo detectada en el chat."}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -942,7 +1005,7 @@ const StatisticsView = () => {
 };
 
 // ==========================================
-// VISTA 3: PACIENTES (Conectada a 'usuarios')
+// VISTA 3: PACIENTES (Conectada a la tabla 'usuarios')
 // ==========================================
 const PatientsView = () => {
   const [patients, setPatients] = useState([]);

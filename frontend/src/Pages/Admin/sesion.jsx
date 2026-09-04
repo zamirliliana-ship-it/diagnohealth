@@ -100,7 +100,7 @@ const AuthPortal = () => {
           {/* Contenido Central / Mensaje */}
           <div className="relative z-10 my-auto py-12">
             <h2 className="text-3xl font-extrabold tracking-tight mb-4">
-              Gestión médica inteligente y segura.
+              Gestión inteligente y segura.
             </h2>
             <p className="text-sky-200 text-sm leading-relaxed">
               Plataforma centralizada de administración clínica, control de
