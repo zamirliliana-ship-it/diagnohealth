@@ -20,7 +20,7 @@ import CerrarSesion from "./Pages/Home/CerrarSesion";
 import RecuperarPassword from "./Pages/Home/RecuperarPassword";
 import RestablecerPassword from "./Pages/Home/RestablecerPassword";
 import TestBienestar from "./Pages/Home/TestBienestar";
-import Recursos from "./Pages/Home/Recursos";
+
 // Importa tu portal unificado de administración y el panel principal
 import AuthPortal from "./Pages/Admin/sesion";
 import DiagnoHealthApp from "./Pages/Admin/Admis";
@@ -129,14 +129,6 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <MiProgreso />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/recursos"
-        element={
-          <ProtectedRoute>
-            <Recursos />
           </ProtectedRoute>
         }
       />

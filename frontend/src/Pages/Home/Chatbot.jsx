@@ -6,7 +6,6 @@ import {
 } from "react-router-dom";
 
 import {
-  Activity,
   ArrowLeft,
   Menu,
   X,
@@ -870,29 +869,6 @@ function Chatbot() {
   };
 
   // ============================================================
-  // CERRAR SESIÓN
-  // ============================================================
-
-  const handleLogout = async () => {
-
-    try {
-
-      await supabase.auth.signOut();
-
-      navigate("/login", {
-        replace: true,
-      });
-
-    } catch (err) {
-
-      console.error(
-        "Error cerrando sesión:",
-        err
-      );
-    }
-  };
-
-  // ============================================================
   // CRISIS
   // ============================================================
 
@@ -963,12 +939,15 @@ function Chatbot() {
 
           <div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
 
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0369A1] text-white">
-                <Activity size={20} />
-              </div>
+                <img
+                  src="imagenes/diagnohealth-logo.png"
+                  alt="DiagnoHealth"
+                  className="h-10 w-10 rounded-full object-cover"
+                />
 
+              
               <h1 className="text-xl font-bold text-[#0369A1]">
                 DiagnoHealth
               </h1>
@@ -1003,7 +982,7 @@ function Chatbot() {
               navigate("/inicioS");
               setSidebarOpen(false);
             }}
-            className="mb-2 flex w-full items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100"
+            className="mb-2 flex w-full items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium text-gray-600 transition hover:bg-gray-100"
           >
             <ArrowLeft size={17} />
 
@@ -1015,7 +994,7 @@ function Chatbot() {
             type="button"
             onClick={handleNewConversation}
             disabled={loading}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0369A1] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#075985] disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0369A1] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#075985] disabled:opacity-50"
           >
             <Plus size={18} />
 
@@ -1050,9 +1029,22 @@ function Chatbot() {
           {!cargandoConversaciones &&
             conversaciones.length === 0 && (
 
-              <p className="px-2 py-3 text-sm text-gray-400">
-                Aún no tienes conversaciones guardadas.
-              </p>
+              <div className="mx-1 rounded-xl border border-dashed border-gray-200 px-3 py-6 text-center">
+
+                <MessageSquare
+                  size={22}
+                  className="mx-auto mb-2 text-gray-300"
+                />
+
+                <p className="text-sm text-gray-400">
+                  Aún no tienes conversaciones guardadas.
+                </p>
+
+                <p className="mt-1 text-xs text-gray-300">
+                  Empieza una nueva para verla aquí.
+                </p>
+
+              </div>
 
             )}
 
@@ -1132,17 +1124,9 @@ function Chatbot() {
           <button
             type="button"
             onClick={handleCrisis}
-            className="mb-2 w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 hover:bg-red-100"
+            className="mb-2 w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100"
           >
             🚨 Necesito ayuda
-          </button>
-
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="w-full rounded-xl px-4 py-3 text-left text-sm text-gray-600 hover:bg-gray-100"
-          >
-            Cerrar sesión
           </button>
 
         </div>
@@ -1157,7 +1141,7 @@ function Chatbot() {
 
         {/* HEADER */}
 
-        <header className="border-b border-gray-200 bg-white/90 px-4 py-4">
+        <header className="border-b border-gray-200 bg-white/90 px-4 py-4 backdrop-blur">
 
           <div className="mx-auto flex max-w-5xl items-center justify-between">
 
@@ -1173,11 +1157,12 @@ function Chatbot() {
                 <Menu size={20} />
               </button>
 
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#0369A1] to-[#0C4A6E] text-white">
-
-                <Activity size={18} />
-
-              </div>
+              {/*
+                Se quitó el ícono redondo que iba aquí
+                (el que estaba junto al título).
+                Ahora el título va solo, sin ícono duplicado
+                con el del menú lateral.
+              */}
 
               <div>
 
@@ -1196,7 +1181,7 @@ function Chatbot() {
             <button
               type="button"
               onClick={handleCrisis}
-              className="rounded-xl bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
+              className="rounded-xl bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100"
             >
               🚨 Crisis
             </button>
@@ -1265,9 +1250,15 @@ function Chatbot() {
 
               <div className="flex justify-start">
 
-                <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-500">
+                <div className="flex items-center gap-1 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-500">
 
-                  DIAGNOHEALTH está escribiendo...
+                  <span>DIAGNOHEALTH está escribiendo</span>
+
+                  <span className="flex gap-0.5">
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400 [animation-delay:-0.3s]" />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400 [animation-delay:-0.15s]" />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400" />
+                  </span>
 
                 </div>
 
@@ -1303,7 +1294,7 @@ function Chatbot() {
 
           <div className="mx-auto max-w-4xl">
 
-            <div className="flex items-end gap-3 rounded-2xl border border-gray-300 bg-gray-50 p-2 focus-within:border-[#0369A1] focus-within:bg-white">
+            <div className="flex items-end gap-3 rounded-2xl border border-gray-300 bg-gray-50 p-2 transition-colors focus-within:border-[#0369A1] focus-within:bg-white">
 
               <textarea
                 ref={textareaRef}
@@ -1328,7 +1319,7 @@ function Chatbot() {
                   cargandoConversacion ||
                   !message.trim()
                 }
-                className="rounded-xl bg-gradient-to-br from-[#0369A1] to-[#0C4A6E] px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-xl bg-gradient-to-br from-[#0369A1] to-[#0C4A6E] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading
                   ? "..."
